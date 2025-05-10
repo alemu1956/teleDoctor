@@ -1,0 +1,35 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+ENV/
+.ipynb_checkpoints
+*.log
+*.csv
+*.sqlite3
+*.db
+*.h5
+*.pkl
+*.pt
+*.onnx
+.env
+
+# === Node.js ===
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === IDEs ===
+.vscode/
+.idea/ 
+Add .gitignore for Python and Node.js
