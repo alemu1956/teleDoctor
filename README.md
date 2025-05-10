@@ -21,6 +21,14 @@
 - **Deployment**: Docker, GitHub Actions, cloud-ready
 - **AI**: Symptom-to-condition matching using ML/LLM
 
+  ---
+
+🌍 **Remote Volunteering by Diaspora Doctors**
+
+A core feature of **teleDoctor** is its ability to connect highly skilled doctors from the diaspora with underserved patients in remote regions. These doctors — many of whom live in Europe, North America, and the Middle East — possess not only deep medical expertise but also cultural understanding and language fluency.
+
+With teleDoctor's secure, role-based platform, they can volunteer remotely, offering diagnostic support, second opinions, or live consultations, all without leaving their homes. This model unlocks an untapped global network of compassionate professionals who are eager to give back and bridge the healthcare gap in their home communities.
+
 ---
 
 ## 🔧 Project Structure
