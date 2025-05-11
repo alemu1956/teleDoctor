@@ -33,3 +33,4 @@ Thumbs.db
 .vscode/
 .idea/ 
 Add .gitignore for Python and Node.js
+token.txt
