@@ -1,0 +1,47 @@
+<!-- frontend/doctor.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>teleDoctor – Doctor Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f4; }
+    h1 { color: #333; }
+    .case { background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px; box-shadow: 0 0 5px #ccc; }
+    .case p { margin: 5px 0; }
+    textarea { width: 100%; padding: 10px; margin-top: 10px; }
+    button { margin-top: 10px; padding: 10px 15px; }
+  </style>
+</head>
+<body>
+  <h1>🩺 teleDoctor – Doctor Panel</h1>
+
+  <div class="case">
+    <p><strong>🧾 Patient Symptom:</strong></p>
+    <p id="symptom">"chest pain with shortness of breath"</p>
+
+    <p><strong>📝 Doctor Notes:</strong></p>
+    <textarea id="doctorNotes" placeholder="Write your diagnosis or comments here..."></textarea>
+
+    <button onclick="submitNote()">Submit Diagnosis</button>
+  </div>
+
+  <script>
+    function submitNote() {
+      const notes = document.getElementById("doctorNotes").value;
+      const symptom = document.getElementById("symptom").textContent;
+
+      const record = {
+        symptom: symptom,
+        doctor_notes: notes,
+        reviewed_by: "Dr. Alemu"
+      };
+
+      console.log("Doctor submission:", record);
+      alert("Diagnosis submitted! (Simulation)");
+      // You can replace this with fetch() to store in backend
+    }
+  </script>
+</body>
+</html>
