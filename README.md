@@ -1,44 +1,31 @@
-# 🩺 teleDoctor – AI-Powered Diagnosis Assistant for Health Workers
+# 🩺 teleDoctor
 
-**teleDoctor** is an open-source, server-based application that integrates AI to assist health professionals in diagnosing patients, especially in remote or resource-limited settings.
-
----
-
-## 🚀 Project Goals
-
-- Improve diagnostic support through AI
-- Provide symptom-based suggestions and potential conditions
-- Collect and store anonymous patient case data for refinement
-- Support mobile and desktop interfaces for clinics and field work
+**teleDoctor** is an AI-powered web application that allows users to speak their symptoms, convert speech to text, and receive intelligent diagnostic suggestions from ChatGPT. It combines frontend speech recognition with a backend-integrated OpenAI API to deliver secure, fast, and informative results.
 
 ---
 
-## 🧠 Technologies Used
+## 🔧 Features
 
-- **Backend**: Python (Flask or FastAPI), AI/ML models (e.g., scikit-learn, TensorFlow, or PyTorch)
-- **Frontend**: React.js or Vue.js
-- **Database**: MongoDB / PostgreSQL / SQLite
-- **Deployment**: Docker, GitHub Actions, cloud-ready
-- **AI**: Symptom-to-condition matching using ML/LLM
-
-  ---
-
-🌍 **Remote Volunteering by Diaspora Doctors**
-
-A core feature of **teleDoctor** is its ability to connect highly skilled doctors from the diaspora with underserved patients in remote regions. These doctors — many of whom live in Europe, North America, and the Middle East — possess not only deep medical expertise but also cultural understanding and language fluency.
-
-With teleDoctor's secure, role-based platform, they can volunteer remotely, offering diagnostic support, second opinions, or live consultations, all without leaving their homes. This model unlocks an untapped global network of compassionate professionals who are eager to give back and bridge the healthcare gap in their home communities.
+- 🎙️ Record voice using browser speech recognition  
+- 📝 Auto-transcribe voice to text  
+- 🤖 Send diagnosis text securely to ChatGPT via backend  
+- 📤 Display AI-generated medical responses  
+- 🔒 Backend-secured API key (never exposed on frontend)
 
 ---
 
-## 🔧 Project Structure
+## 📁 Project Structure
 
 ```bash
-/teleDoctor
-├── backend/       # API and AI logic
-├── frontend/      # Web interface
-├── models/        # Trained models or scripts
-├── data/          # Sample or training data (anonymized)
-├── docs/          # Developer and user documentation
-├── .gitignore
+teleDoctor/
+├── backend/            # Express server (API & OpenAI logic)
+│   ├── server.js
+│   ├── package.json
+│   ├── .env            # Contains your OpenAI API key (excluded from Git)
+│   ├── models/         # Future: schema or logic modules
+│   └── routes/         # Future: modular route handling
+├── frontend/           # Static HTML frontend
+│   └── doctor.html
+├── data/               # (Optional) JSON or diagnosis files
+├── docs/               # Documentation, diagrams, etc.
 └── README.md

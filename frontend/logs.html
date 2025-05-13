@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>teleDoctor – Audit Logs</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 2em;
+    }
+
+    nav {
+      background: #003355;
+      color: white;
+      padding: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav button {
+      background: #cc0000;
+      border: none;
+      color: white;
+      padding: 0.5em 1em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      background: white;
+      border-collapse: collapse;
+      margin-top: 2em;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 0.6em;
+      text-align: left;
+    }
+
+    th {
+      background-color: #004466;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div><b>teleDoctor Admin Logs</b></div>
+    <button onclick="logout()">Logout</button>
+  </nav>
+
+  <h2>📋 Audit Log: User Approval & Rejection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Admin</th>
+        <th>Action</th>
+        <th>Target Name</th>
+        <th>Email</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody id="logTable"></tbody>
+  </table>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "admin") {
+      alert("Access denied. Admins only.");
+      window.location.href = "login.html";
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    async function loadLogs() {
+      try {
+        const res = await fetch("http://localhost:3000/auth/logs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const logs = await res.json();
+
+        const table = document.getElementById("logTable");
+        table.innerHTML = "";
+
+        logs.reverse().forEach(entry => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${entry.timestamp}</td>
+            <td>${entry.admin}</td>
+            <td><b>${entry.action.toUpperCase()}</b></td>
+            <td>${entry.target.name}</td>
+            <td>${entry.target.email}</td>
+            <td>${entry.target.role}</td>
+          `;
+          table.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Failed to load logs:", err);
+        alert("Unable to fetch logs.");
+      }
+    }
+
+    loadLogs();
+  </script>
+</body>
+
+</html>

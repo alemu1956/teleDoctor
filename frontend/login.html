@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>teleDoctor – Login / Register</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      padding: 2em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: white;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #004466;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.6em;
+      margin: 0.5em 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.7em;
+      background: #004466;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin-top: 1em;
+      cursor: pointer;
+    }
+
+    p {
+      text-align: center;
+      margin-top: 1em;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h2 id="formTitle">Login</h2>
+    <input type="text" id="name" placeholder="Full Name" style="display:none;" />
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <select id="role" style="display:none;">
+      <option value="doctor">Doctor</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button id="submit">Login</button>
+    <p><a href="#" id="toggleMode">Don't have an account? Register</a></p>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const isRegistering = { value: false };
+    const api = "http://localhost:3000/auth";
+
+    const nameField = document.getElementById('name');
+    const roleField = document.getElementById('role');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const message = document.getElementById('message');
+
+    document.getElementById('toggleMode').onclick = () => {
+      isRegistering.value = !isRegistering.value;
+      document.getElementById('formTitle').innerText = isRegistering.value ? "Register" : "Login";
+      document.getElementById('submit').innerText = isRegistering.value ? "Register" : "Login";
+      nameField.style.display = isRegistering.value ? "block" : "none";
+      roleField.style.display = isRegistering.value ? "block" : "none";
+      message.innerText = "";
+    };
+
+    document.getElementById('submit').onclick = async () => {
+      const user = {
+        name: nameField.value.trim(),
+        email: email.value.trim(),
+        password: password.value.trim(),
+        role: roleField.value
+      };
+
+      if (isRegistering.value) {
+        const res = await fetch(`${api}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(user)
+        });
+        const data = await res.json();
+        message.style.color = data.message ? "green" : "red";
+        message.innerText = data.message || data.error || "Something went wrong.";
+      } else {
+        const res = await fetch(`${api}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email, password: user.password })
+        });
+        const data = await res.json();
+        if (data.token) {
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("role", data.role);
+  message.style.color = "green";
+  message.innerText = "✅ Login successful.";
+
+  setTimeout(() => {
+    if (data.role === "admin") {
+      window.location.href = "admin.html";
+    } else {
+      window.location.href = "doctor.html";
+    }
+  }, 1000);
+} else {
+          message.style.color = "red";
+          message.innerText = data.error || "Login failed.";
+        }
+      }
+    };
+  </script>
+
+</body>
+
+</html>

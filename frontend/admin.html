@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>teleDoctor – Admin Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: #f0f4f8;
+    }
+    nav {
+      background: #003366;
+      color: white;
+      padding: 1em 2em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav h1 {
+      margin: 0;
+      font-size: 1.2em;
+    }
+    nav button {
+      background: #cc0000;
+      color: white;
+      border: none;
+      padding: 0.5em 1em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    main {
+      padding: 2em;
+    }
+    .link-box {
+      background: white;
+      padding: 1.5em;
+      margin-bottom: 1em;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .link-box a {
+      text-decoration: none;
+      color: #003366;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <h1>🩺 teleDoctor – Ministry Admin Panel</h1>
+    <button onclick="logout()">Logout</button>
+  </nav>
+
+  <main>
+    <h2>Welcome, Ministry Administrator</h2>
+
+    <div class="link-box">
+      <a href="approve.html">✅ Review and Approve Pending Users</a>
+    </div>
+
+    <div class="link-box">
+      <a href="logs.html">📋 View Approval Logs</a>
+    </div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "admin") {
+      alert("Access denied. Admins only.");
+      window.location.href = "login.html";
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+  </script>
+
+</body>
+</html>

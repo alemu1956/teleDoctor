@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "name": "Ministry Admin",
+    "email": "admin@health.gov.et",
+    "password": "$2b$10$tueJr3zGg3zVzjY/3jI2e.1TiXSILB.g7OXdT/xrkzxLYWIyvUZRy",
+    "role": "admin",
+    "approved": true
+  }
+]
