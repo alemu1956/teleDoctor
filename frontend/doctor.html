@@ -1,47 +1,171 @@
-<!-- frontend/doctor.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
   <title>teleDoctor – Doctor Panel</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f4; }
-    h1 { color: #333; }
-    .case { background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px; box-shadow: 0 0 5px #ccc; }
-    .case p { margin: 5px 0; }
-    textarea { width: 100%; padding: 10px; margin-top: 10px; }
-    button { margin-top: 10px; padding: 10px 15px; }
+    body {
+      font-family: sans-serif;
+      background: #f3f3f3;
+      margin: 0;
+    }
+    nav {
+      background: #004466;
+      color: white;
+      padding: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav span {
+      margin-right: 1em;
+    }
+    nav button {
+      background: #cc0000;
+      border: none;
+      color: white;
+      padding: 0.5em 1em;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    nav a {
+      color: white;
+      text-decoration: underline;
+      margin-left: 1em;
+    }
+    .card {
+      background: white;
+      margin: 2em auto;
+      padding: 1.5em;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 600px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 0.5em;
+    }
+    button.action {
+      margin: 0.5em 0.5em 0 0;
+      padding: 0.5em 1em;
+    }
+    .response {
+      margin-top: 1em;
+      padding: 1em;
+      background: #eef;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
-  <h1>🩺 teleDoctor – Doctor Panel</h1>
 
-  <div class="case">
-    <p><strong>🧾 Patient Symptom:</strong></p>
-    <p id="symptom">"chest pain with shortness of breath"</p>
+  <nav>
+    <div>
+      <span id="roleDisplay">Loading...</span>
+      <a id="adminLink" href="admin.html" style="display:none;">Admin Panel</a>
+    </div>
+    <button onclick="logout()">Logout</button>
+  </nav>
 
-    <p><strong>📝 Doctor Notes:</strong></p>
-    <textarea id="doctorNotes" placeholder="Write your diagnosis or comments here..."></textarea>
+  <div class="card">
+    <h2>🩺 <b>teleDoctor</b> – Doctor Panel</h2>
 
-    <button onclick="submitNote()">Submit Diagnosis</button>
+    <p><b>🎤 Patient Speech Transcript:</b></p>
+    <textarea id="transcript" placeholder="Click 'Start Recording' and speak..."></textarea>
+
+    <p><b>🌍 Translated (English) Diagnosis:</b></p>
+    <textarea id="translatedText" placeholder="Translated text appears here for editing..."></textarea>
+
+    <div>
+      <button class="action" id="start">🎙️ Start Recording</button>
+      <button class="action" id="stop">🛑 Stop</button>
+      <button class="action" id="translate">🌐 Translate</button>
+      <button class="action" id="send">📤 Send to ChatGPT</button>
+    </div>
+
+    <div class="response" id="ai-response"></div>
   </div>
 
   <script>
-    function submitNote() {
-      const notes = document.getElementById("doctorNotes").value;
-      const symptom = document.getElementById("symptom").textContent;
+    // Auth check
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-      const record = {
-        symptom: symptom,
-        doctor_notes: notes,
-        reviewed_by: "Dr. Alemu"
-      };
-
-      console.log("Doctor submission:", record);
-      alert("Diagnosis submitted! (Simulation)");
-      // You can replace this with fetch() to store in backend
+    if (!token) {
+      alert("Not authorized. Please login.");
+      window.location.href = "login.html";
     }
+
+    // Show role and admin link
+    document.getElementById("roleDisplay").innerText = "Role: " + role;
+    if (role === "admin") {
+      document.getElementById("adminLink").style.display = "inline";
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    // Speech Recognition
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'am-ET';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    const transcriptBox = document.getElementById('transcript');
+    const translatedBox = document.getElementById('translatedText');
+    const responseBox = document.getElementById('ai-response');
+
+    document.getElementById('start').onclick = () => {
+      transcriptBox.value = "";
+      recognition.start();
+    };
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      transcriptBox.value = text;
+    };
+
+    document.getElementById('stop').onclick = () => {
+      recognition.stop();
+    };
+
+    async function translateToEnglish(text) {
+      const res = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" + encodeURIComponent(text));
+      const data = await res.json();
+      return data[0][0][0];
+    }
+
+    document.getElementById('translate').onclick = async () => {
+      const text = transcriptBox.value.trim();
+      if (!text) return alert("No speech text to translate.");
+      const translated = await translateToEnglish(text);
+      translatedBox.value = translated;
+    };
+
+    document.getElementById('send').onclick = async () => {
+      const diagnosis = translatedBox.value.trim();
+      if (!diagnosis) return alert("No English text to send.");
+      responseBox.innerText = "⏳ Awaiting AI response...";
+
+      const res = await fetch("http://localhost:3000/ask-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ diagnosis })
+      });
+
+      const data = await res.json();
+      if (data.reply) {
+        responseBox.innerText = `🧠 ChatGPT says:\n\n${data.reply}`;
+      } else {
+        responseBox.innerText = "⚠️ Failed to get response.";
+      }
+    };
   </script>
+
 </body>
 </html>
