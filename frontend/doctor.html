@@ -44,7 +44,9 @@
       cursor: pointer;
     }
 
-    audio {
+    audio,
+    video,
+    canvas {
       display: block;
       margin-top: 1em;
     }
@@ -60,26 +62,28 @@
 </head>
 
 <body>
-
   <div class="card">
-    <h2>🩺 Doctor Panel</h2>
+    <h2>🦧 Doctor Panel</h2>
 
-    <button onclick="startRecording()">🎙️ Start Recording</button>
+    <button onclick="startRecording()">🎧 Start Recording</button>
     <button onclick="stopRecording()">🛑 Stop</button>
     <audio id="audioPlayer" controls></audio>
 
+    <button onclick="startCamera()">📷 Start Camera</button>
+    <button onclick="captureFrame()">🖼️ Capture Image</button>
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="snapshot" width="320" height="240" style="display:none;"></canvas>
+
     <h3>📝 Translated & Editable Text</h3>
     <textarea id="translatedText" placeholder="Translation will appear here..."></textarea>
-    <button onclick="sendToAI()">🤖 Submit to AI</button>
+    <button onclick="sendToAI()">🧠 Submit to AI</button>
 
     <div id="diagnosis"></div>
   </div>
 
   <script>
-    // ⛔ Restrict access if not a doctor
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
-
     if (!token || role !== "doctor") {
       alert("Access denied. Doctors only.");
       window.location.href = "login.html";
@@ -87,22 +91,19 @@
 
     let mediaRecorder;
     let audioChunks = [];
+    let capturedImage = null;
 
     function startRecording() {
       navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.start();
-
         audioChunks = [];
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-
         mediaRecorder.onstop = () => {
           const audioBlob = new Blob(audioChunks);
           const audioUrl = URL.createObjectURL(audioBlob);
           document.getElementById("audioPlayer").src = audioUrl;
-
-          // Simulated transcription result
-          document.getElementById("translatedText").value = "I have a bad headache";
+          document.getElementById("translatedText").value = "I have a bad headache"; // Simulated
         };
       }).catch(err => alert("Mic access denied: " + err));
     }
@@ -111,6 +112,25 @@
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
       }
+    }
+
+    let videoStream;
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          videoStream = stream;
+          document.getElementById("video").srcObject = stream;
+        })
+        .catch(err => alert("Camera access denied: " + err));
+    }
+
+    function captureFrame() {
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("snapshot");
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      capturedImage = canvas.toDataURL("image/png");
+      console.log("📸 Captured image:", capturedImage.substring(0, 50) + "...");
     }
 
     async function sendToAI() {
@@ -127,13 +147,18 @@
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token
           },
-          body: JSON.stringify({ text: inputText })
+          body: JSON.stringify({
+            text: inputText,
+            imageData: capturedImage
+          })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          document.getElementById("diagnosis").innerHTML = `<strong>Diagnosis:</strong><br>${data.diagnosis}`;
+          document.getElementById("diagnosis").innerHTML =
+            `<strong>Diagnosis:</strong><br>${data.diagnosis}<br>` +
+            (data.image ? `<br>📷 Image saved as: ${data.image}` : "");
         } else {
           console.error("Submit error:", data);
           alert("Failed to reach AI service: " + (data.error || "Unknown error"));
