@@ -1,45 +1,63 @@
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-require("dotenv").config();
+// server.js
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const OpenAI = require('openai');
 
-const authRoutes = require("./authRoutes");
-
-const OpenAI = require("openai");
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
+dotenv.config();
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.json()); // <--- REQUIRED for req.body to work!
+app.use(express.json());
 
-app.use("/auth", authRoutes);
+let users = require('./users.json');
+const logsFile = './logs.json';
 
-// ChatGPT endpoint (requires frontend auth in the future)
-app.post("/ask-ai", async (req, res) => {
-  const userMessage = req.body.diagnosis;
-  if (!userMessage) return res.status(400).json({ error: "No input provided." });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_API_BASE || "https://api.openai.com/v1"
+});
+
+const authRoutes = require('./authRoutes');
+app.use('/auth', authRoutes);
+
+function verifyToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(403).json({ error: 'Missing token' });
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = decoded;
+    next();
+  });
+}
+
+app.post('/diagnose', verifyToken, async (req, res) => {
+  const prompt = req.body.prompt;
+  console.log("📥 Diagnose called with text:", prompt);
+  console.log("🔐 Token from request:", req.headers.authorization);
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "You are a helpful medical assistant." },
-        { role: "user", content: userMessage }
-      ]
+      model: 'openai/gpt-3.5-turbo',
+      messages: [{ role: "user", content: prompt }]
     });
 
     const reply = completion.choices[0].message.content;
+    console.log("✅ AI replied:", reply);
     res.json({ reply });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to get AI response." });
+    if (err.response) {
+      console.error("❌ AI Error (Response):", err.response.status, err.response.data);
+    } else {
+      console.error("❌ AI Error:", err.message);
+    }
+    res.status(500).json({ error: "AI failed", details: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+app.listen(3000, () => {
+  console.log('✅ Server is running at http://localhost:3000');
 });

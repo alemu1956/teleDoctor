@@ -1,181 +1,123 @@
-const express = require("express");
-const fs = require("fs");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+// authRoutes.js
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
 const router = express.Router();
+require('dotenv').config();
 
-const USERS_FILE = "users.json";
-const LOG_FILE = "logs.json";
-const SECRET = "teleDoctorSecretKey";
+const usersFile = './users.json';
 
-// Helpers
+// Load and save users
 function loadUsers() {
-  return fs.existsSync(USERS_FILE) ? JSON.parse(fs.readFileSync(USERS_FILE, "utf8")) : [];
+  try {
+    return JSON.parse(fs.readFileSync(usersFile));
+  } catch {
+    return [];
+  }
 }
-
 function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
-
-function logAction(adminEmail, action, targetUser) {
-  const logs = fs.existsSync(LOG_FILE) ? JSON.parse(fs.readFileSync(LOG_FILE, "utf8")) : [];
-  logs.push({
+function logAction(by, action, user) {
+  const log = {
     timestamp: new Date().toISOString(),
-    admin: adminEmail,
+    by,
     action,
-    target: {
-      id: targetUser.id,
-      name: targetUser.name,
-      email: targetUser.email,
-      role: targetUser.role
-    }
-  });
-  fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
+    user: { id: user.id, email: user.email, role: user.role }
+  };
+  const logs = fs.existsSync('logs.json') ? JSON.parse(fs.readFileSync('logs.json')) : [];
+  logs.push(log);
+  fs.writeFileSync('logs.json', JSON.stringify(logs, null, 2));
+}
+function verifyAdmin(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(403).json({ error: 'Missing token' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admins only' });
+    req.admin = decoded;
+    next();
+  } catch {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
 }
 
-// POST /auth/register
-router.post("/register", async (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ error: "Missing fields." });
-  }
-
+// Register route
+router.post('/register', async (req, res) => {
   const users = loadUsers();
+  const { name, email, password, role } = req.body;
+
   if (users.find(u => u.email === email)) {
-    return res.status(409).json({ error: "Email already registered." });
+    return res.status(400).json({ error: 'Email already exists' });
   }
 
-  const hashed = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
   const newUser = {
     id: Date.now(),
     name,
     email,
-    password: hashed,
+    password: hashedPassword,
     role,
     approved: false
   };
 
   users.push(newUser);
   saveUsers(users);
-  res.status(201).json({ message: "Registration submitted for approval." });
+  res.json({ message: 'Registered successfully. Awaiting approval.' });
 });
 
-// POST /auth/login
-router.post("/login", async (req, res) => {
-  console.log("LOGIN REQUEST RECEIVED");
-  console.log("BODY:", req.body);  // Debug line
-
-  const { email, password } = req.body;
+// Login route
+router.post('/login', async (req, res) => {
   const users = loadUsers();
+  const { email, password } = req.body;
   const user = users.find(u => u.email === email);
 
-  if (!user) {
-    return res.status(401).json({ error: "Invalid email or password." });
-  }
-
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) {
-    return res.status(401).json({ error: "Invalid email or password." });
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ error: 'Invalid email or password' });
   }
 
   if (!user.approved) {
-    return res.status(403).json({ error: "Account not yet approved by Ministry." });
+    return res.status(403).json({ error: 'User not yet approved' });
   }
 
-  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET, { expiresIn: "1d" });
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '1d' }
+  );
   res.json({ token, role: user.role });
 });
 
-// GET /auth/verify-token
-router.get("/verify-token", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Missing token" });
-
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    res.json({ valid: true, user: decoded });
-  } catch {
-    res.status(403).json({ error: "Invalid token" });
-  }
+// Admin: View pending users
+router.get('/pending', verifyAdmin, (req, res) => {
+  const users = loadUsers();
+  const pending = users.filter(u => !u.approved);
+  res.json(pending);
 });
 
-// GET /auth/pending-users
-router.get("/pending-users", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Missing token" });
+// Admin: Approve user
+router.post('/approve/:id', verifyAdmin, (req, res) => {
+  const users = loadUsers();
+  const user = users.find(u => u.id == req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
 
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    if (decoded.role !== "admin") return res.status(403).json({ error: "Access denied" });
-
-    const users = loadUsers();
-    const pending = users.filter(u => !u.approved);
-    res.json(pending);
-  } catch {
-    res.status(403).json({ error: "Invalid token" });
-  }
+  user.approved = true;
+  saveUsers(users);
+  logAction(req.admin.email, 'approved', user);
+  res.json({ message: 'User approved.' });
 });
 
-// POST /auth/approve-user
-router.post("/approve-user", (req, res) => {
-  const { id } = req.body;
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Missing token" });
+// Admin: Reject user
+router.post('/reject/:id', verifyAdmin, (req, res) => {
+  let users = loadUsers();
+  const user = users.find(u => u.id == req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
 
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    if (decoded.role !== "admin") return res.status(403).json({ error: "Access denied" });
-
-    const users = loadUsers();
-    const user = users.find(u => u.id === id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    user.approved = true;
-    saveUsers(users);
-    logAction(decoded.email, "approved", user);
-    res.json({ message: "User approved." });
-  } catch {
-    res.status(403).json({ error: "Invalid token" });
-  }
-});
-
-// POST /auth/reject-user
-router.post("/reject-user", (req, res) => {
-  const { id } = req.body;
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Missing token" });
-
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    if (decoded.role !== "admin") return res.status(403).json({ error: "Access denied" });
-
-    const users = loadUsers();
-    const user = users.find(u => u.id === id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    logAction(decoded.email, "rejected", user);
-    const updated = users.filter(u => u.id !== id);
-    saveUsers(updated);
-    res.json({ message: "User rejected and removed." });
-  } catch {
-    res.status(403).json({ error: "Invalid token" });
-  }
-});
-
-// GET /auth/logs
-router.get("/logs", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Missing token" });
-
-  try {
-    const decoded = jwt.verify(token, SECRET);
-    if (decoded.role !== "admin") return res.status(403).json({ error: "Access denied" });
-
-    const logs = fs.existsSync(LOG_FILE) ? JSON.parse(fs.readFileSync(LOG_FILE, "utf8")) : [];
-    res.json(logs);
-  } catch {
-    res.status(403).json({ error: "Invalid token" });
-  }
+  logAction(req.admin.email, 'rejected', user);
+  users = users.filter(u => u.id != req.params.id);
+  saveUsers(users);
+  res.json({ message: 'User rejected and removed.' });
 });
 
 module.exports = router;
