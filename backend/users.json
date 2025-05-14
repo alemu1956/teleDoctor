@@ -6,5 +6,13 @@
     "password": "$2b$10$tueJr3zGg3zVzjY/3jI2e.1TiXSILB.g7OXdT/xrkzxLYWIyvUZRy",
     "role": "admin",
     "approved": true
+  },
+  {
+    "id": 1747212890971,
+    "name": "Dr. Yared",
+    "email": "doctor@hospital.et",
+    "password": "$2b$10$mfCMwIniih/P1THV3MoFPO/96LyMZ4FGgVTxFqZBThBzaiUiFHn6q",
+    "role": "doctor",
+    "approved": true
   }
 ]
