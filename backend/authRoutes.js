@@ -1,58 +1,46 @@
-// authRoutes.js
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const bcrypt = require('bcrypt');
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
 const router = express.Router();
-require('dotenv').config();
 
-const usersFile = './users.json';
+const JWT_SECRET = process.env.JWT_SECRET || "teleDoctorSecret";
+const USERS_FILE = path.join(__dirname, "users.json");
+const LOGS_FILE = path.join(__dirname, "logs.json");
 
-// Load and save users
+// ✅ Utility: Load and save users
 function loadUsers() {
-  try {
-    return JSON.parse(fs.readFileSync(usersFile));
-  } catch {
-    return [];
-  }
+  if (!fs.existsSync(USERS_FILE)) return [];
+  return JSON.parse(fs.readFileSync(USERS_FILE));
 }
+
 function saveUsers(users) {
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
-function logAction(by, action, user) {
+
+// ✅ Utility: Log admin actions
+function logAction(adminEmail, action, user) {
   const log = {
     timestamp: new Date().toISOString(),
-    by,
+    admin: adminEmail,
     action,
-    user: { id: user.id, email: user.email, role: user.role }
+    targetUser: user.email
   };
-  const logs = fs.existsSync('logs.json') ? JSON.parse(fs.readFileSync('logs.json')) : [];
+  const logs = fs.existsSync(LOGS_FILE) ? JSON.parse(fs.readFileSync(LOGS_FILE)) : [];
   logs.push(log);
-  fs.writeFileSync('logs.json', JSON.stringify(logs, null, 2));
-}
-function verifyAdmin(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(403).json({ error: 'Missing token' });
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admins only' });
-    req.admin = decoded;
-    next();
-  } catch {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
+  fs.writeFileSync(LOGS_FILE, JSON.stringify(logs, null, 2));
 }
 
-// Register route
-router.post('/register', async (req, res) => {
-  const users = loadUsers();
+// 📝 Register
+router.post("/register", (req, res) => {
   const { name, email, password, role } = req.body;
-
+  const users = loadUsers();
   if (users.find(u => u.email === email)) {
-    return res.status(400).json({ error: 'Email already exists' });
+    return res.status(400).json({ error: "User already exists." });
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const newUser = {
     id: Date.now(),
     name,
@@ -64,60 +52,89 @@ router.post('/register', async (req, res) => {
 
   users.push(newUser);
   saveUsers(users);
-  res.json({ message: 'Registered successfully. Awaiting approval.' });
+  res.json({ message: "Registration successful. Awaiting admin approval." });
 });
 
-// Login route
-router.post('/login', async (req, res) => {
-  const users = loadUsers();
+// 🔑 Login
+router.post("/login", (req, res) => {
   const { email, password } = req.body;
+  console.log("LOGIN REQUEST RECEIVED");
+  console.log("BODY:", req.body);
+
+  const users = loadUsers();
   const user = users.find(u => u.email === email);
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: 'Invalid email or password' });
+  if (!user) return res.status(401).json({ error: "Invalid email or password." });
+  if (!bcrypt.compareSync(password, user.password)) {
+    return res.status(401).json({ error: "Invalid email or password." });
   }
+  if (!user.approved) return res.status(403).json({ error: "Account pending approval." });
 
-  if (!user.approved) {
-    return res.status(403).json({ error: 'User not yet approved' });
-  }
+  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
+    expiresIn: "1d"
+  });
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: '1d' }
-  );
   res.json({ token, role: user.role });
 });
 
-// Admin: View pending users
-router.get('/pending', verifyAdmin, (req, res) => {
+// 🟡 Get pending users (Admin only)
+router.get("/pending", (req, res) => {
   const users = loadUsers();
   const pending = users.filter(u => !u.approved);
   res.json(pending);
 });
 
-// Admin: Approve user
-router.post('/approve/:id', verifyAdmin, (req, res) => {
+// ✅ Approve user (Admin)
+router.post("/approve/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(403).json({ error: "No token provided" });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid token" });
+  }
+
   const users = loadUsers();
-  const user = users.find(u => u.id == req.params.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
+  const user = users.find(u => u.id === id);
+  if (!user) return res.status(404).json({ error: "User not found" });
 
   user.approved = true;
   saveUsers(users);
-  logAction(req.admin.email, 'approved', user);
-  res.json({ message: 'User approved.' });
+  logAction(decoded.email, "approved", user);
+  res.json({ message: "User approved." });
 });
 
-// Admin: Reject user
-router.post('/reject/:id', verifyAdmin, (req, res) => {
-  let users = loadUsers();
-  const user = users.find(u => u.id == req.params.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
+// ❌ Reject user (Admin)
+router.post("/reject/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(403).json({ error: "No token provided" });
 
-  logAction(req.admin.email, 'rejected', user);
-  users = users.filter(u => u.id != req.params.id);
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid token" });
+  }
+
+  let users = loadUsers();
+  const user = users.find(u => u.id === id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  users = users.filter(u => u.id !== id);
   saveUsers(users);
-  res.json({ message: 'User rejected and removed.' });
+  logAction(decoded.email, "rejected", user);
+  res.json({ message: "User rejected and removed." });
+});
+
+// 📜 Logs viewer (Admin)
+router.get("/logs", (req, res) => {
+  if (!fs.existsSync(LOGS_FILE)) return res.json([]);
+  const logs = JSON.parse(fs.readFileSync(LOGS_FILE));
+  res.json(logs);
 });
 
 module.exports = router;

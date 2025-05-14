@@ -7,117 +7,144 @@
   <style>
     body {
       font-family: sans-serif;
-      background: #f4f4f4;
+      background: #eef2f5;
       padding: 2em;
+      margin: 0;
     }
 
-    .container {
-      max-width: 800px;
-      margin: auto;
+    h2 {
+      color: #004466;
+    }
+
+    .card {
       background: white;
       padding: 2em;
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      max-width: 700px;
+      margin: auto;
     }
 
     textarea {
       width: 100%;
-      height: 120px;
-      padding: 1em;
-      font-size: 1em;
-      border-radius: 5px;
+      height: 150px;
+      padding: 0.8em;
       border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
     }
 
     button {
-      padding: 1em;
       margin-top: 1em;
-      background: #007acc;
+      padding: 0.8em 1.2em;
+      background: #004466;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
 
-    #aiResponse {
+    audio {
+      display: block;
+      margin-top: 1em;
+    }
+
+    #diagnosis {
       margin-top: 2em;
+      background: #e0f7fa;
       padding: 1em;
-      background: #f0f8ff;
-      border-left: 4px solid #007acc;
+      border-radius: 8px;
+      color: #004d40;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h2>🎙️ Record Symptoms</h2>
-    <button onclick="startRecording()">Start Recording</button>
 
-    <h3>📝 Translated Text (editable)</h3>
-    <textarea id="translatedText" placeholder="Translated symptom text will appear here..."></textarea>
+  <div class="card">
+    <h2>🩺 Doctor Panel</h2>
 
+    <button onclick="startRecording()">🎙️ Start Recording</button>
+    <button onclick="stopRecording()">🛑 Stop</button>
+    <audio id="audioPlayer" controls></audio>
+
+    <h3>📝 Translated & Editable Text</h3>
+    <textarea id="translatedText" placeholder="Translation will appear here..."></textarea>
     <button onclick="sendToAI()">🤖 Submit to AI</button>
 
-    <div id="aiResponse"></div>
+    <div id="diagnosis"></div>
   </div>
 
   <script>
-    let recognition;
+    // ⛔ Restrict access if not a doctor
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "doctor") {
+      alert("Access denied. Doctors only.");
+      window.location.href = "login.html";
+    }
+
+    let mediaRecorder;
+    let audioChunks = [];
 
     function startRecording() {
-      if (!('webkitSpeechRecognition' in window)) {
-        alert('Speech recognition not supported in this browser.');
-        return;
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks);
+          const audioUrl = URL.createObjectURL(audioBlob);
+          document.getElementById("audioPlayer").src = audioUrl;
+
+          // Simulated transcription result
+          document.getElementById("translatedText").value = "I have a bad headache";
+        };
+      }).catch(err => alert("Mic access denied: " + err));
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
       }
-
-      recognition = new webkitSpeechRecognition();
-      recognition.lang = 'en-US'; // Use source language here if doing auto-translate later
-      recognition.interimResults = false;
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        document.getElementById("translatedText").value = transcript;
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Recognition error:", event.error);
-      };
-
-      recognition.start();
     }
 
     async function sendToAI() {
-      const prompt = document.getElementById("translatedText").value.trim();
-
-      if (!prompt) {
-        alert("Please enter symptoms before submitting.");
+      const inputText = document.getElementById("translatedText").value.trim();
+      if (!inputText) {
+        alert("Please enter or record text to diagnose.");
         return;
       }
 
-      const token = localStorage.getItem("token");
       try {
-        const res = await fetch("http://localhost:3000/diagnose", {
+        const response = await fetch("http://localhost:3000/diagnose", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            "Authorization": "Bearer " + token
           },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ text: inputText })
         });
 
-        const data = await res.json();
-        if (res.ok) {
-          document.getElementById("aiResponse").innerText = data.reply;
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById("diagnosis").innerHTML = `<strong>Diagnosis:</strong><br>${data.diagnosis}`;
         } else {
-          alert("AI failed: " + (data.error || "Unknown error"));
           console.error("Submit error:", data);
+          alert("Failed to reach AI service: " + (data.error || "Unknown error"));
         }
       } catch (err) {
-        alert("Failed to reach AI service.");
         console.error("Submit error:", err);
+        alert("Failed to reach AI service.");
       }
     }
   </script>
+
 </body>
 
 </html>
