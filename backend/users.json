@@ -14,5 +14,23 @@
     "password": "$2b$10$mfCMwIniih/P1THV3MoFPO/96LyMZ4FGgVTxFqZBThBzaiUiFHn6q",
     "role": "doctor",
     "approved": true
-  }
+  },
+  [
+    {
+      "id": 11,
+      "name": "Ministry Admin",
+      "email": "admin@health.gov.et",
+      "password": "$2b$10$Lk7NQ2h9bfN85BtsYDqD5OUHbADNd4VZk8ZBfrKnNuvNdMrBoNDGy",
+      "role": "admin",
+      "approved": true
+    },
+    {
+      "id": 12,
+      "name": "Dr. Alemu",
+      "email": "doctor@hospital.et",
+      "password": "$2b$10$7AkRUKTZUbGqzMwWozvL4uU3M6MpPiViJIX9Cv6/AsvTu9r3geYcO",
+      "role": "doctor",
+      "approved": true
+    }
+  ]
 ]
