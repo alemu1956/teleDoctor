@@ -1,3 +1,4 @@
+// Teledoctor Backend API with CORS
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
@@ -11,12 +12,15 @@ const axios = require("axios");
 dotenv.config();
 const app = express();
 const PORT = 3000;
+
 const USERS_FILE = path.join(__dirname, "users.json");
 const LOGS_FILE = path.join(__dirname, "logs.json");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
+// ✅ CORS enabled for all domains (adjust for production)
 app.use(cors());
+
 app.use(express.json({ limit: "10mb" }));
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use("/uploads", express.static(UPLOAD_DIR));
