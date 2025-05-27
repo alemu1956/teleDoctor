@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>teleDoctor – Lab Registration</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f0f4f8;
+            padding: 2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: white;
+            padding: 2em;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #003366;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.6em;
+            margin: 0.5em 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.7em;
+            background: #003366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 1em;
+            cursor: pointer;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 1em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2>🧪 Lab Registration</h2>
+        <input type="text" id="name" placeholder="Lab Name" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <input type="text" id="cert" placeholder="Certification Number" required />
+        <input type="text" id="address" placeholder="Lab Address" required />
+        <button onclick="registerLab()">Register</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        async function registerLab() {
+            const user = {
+                name: document.getElementById("name").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                password: document.getElementById("password").value.trim(),
+                role: "lab",
+                cert: document.getElementById("cert").value.trim(),
+                address: document.getElementById("address").value.trim()
+            };
+
+            const res = await fetch("http://localhost:3000/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(user)
+            });
+
+            const data = await res.json();
+            const msg = document.getElementById("message");
+            msg.style.color = data.message ? "green" : "red";
+            msg.innerText = data.message || data.error || "Something went wrong.";
+        }
+    </script>
+
+</body>
+
+</html>

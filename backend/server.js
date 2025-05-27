@@ -1,4 +1,4 @@
-// Teledoctor Backend API with CORS
+// server.js
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
@@ -8,26 +8,37 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs");
 const path = require("path");
 const axios = require("axios");
+const multer = require("multer");
+const sqlite3 = require("sqlite3").verbose();
 
 dotenv.config();
 const app = express();
 const PORT = 3000;
-
 const USERS_FILE = path.join(__dirname, "users.json");
 const LOGS_FILE = path.join(__dirname, "logs.json");
-const UPLOAD_DIR = path.join(__dirname, "uploads");
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
-// ✅ CORS enabled for all domains (adjust for production)
+const db = new sqlite3.Database("teledoctor.db");
+
 app.use(cors());
+app.use(express.json());
+app.use(bodyParser.json());
+app.use("/uploads", express.static("uploads"));
 
-app.use(express.json({ limit: "10mb" }));
-app.use(bodyParser.json({ limit: "10mb" }));
-app.use("/uploads", express.static(UPLOAD_DIR));
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/lab-results");
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + "_" + file.originalname;
+    cb(null, unique);
+  }
+});
+const upload = multer({ storage: storage });
 
 function authMiddleware(req, res, next) {
   const token = req.headers["authorization"];
   if (!token) return res.status(403).json({ error: "No token provided" });
+
   try {
     const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
     req.user = decoded;
@@ -44,9 +55,11 @@ function loadUsers() {
     return [];
   }
 }
+
 function saveUsers(users) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
+
 function logAction(admin, action, user) {
   const logs = fs.existsSync(LOGS_FILE) ? JSON.parse(fs.readFileSync(LOGS_FILE)) : [];
   logs.push({ timestamp: new Date(), admin, action, target: user });
@@ -128,25 +141,15 @@ app.get("/logs", authMiddleware, (req, res) => {
 });
 
 app.post("/diagnose", authMiddleware, async (req, res) => {
-  const { text, imageData } = req.body;
-  if (!text) return res.status(400).json({ error: "Missing input text" });
-
-  let savedImage = null;
-  if (imageData && imageData.startsWith("data:image")) {
-    const base64 = imageData.split(',')[1];
-    const filename = `image_${Date.now()}.png`;
-    const filepath = path.join(UPLOAD_DIR, filename);
-    fs.writeFileSync(filepath, base64, 'base64');
-    savedImage = filename;
-    console.log("📁 Image saved as:", filename);
-  }
-
+  const inputText = req.body.text;
+  if (!inputText) return res.status(400).json({ error: "Missing input text" });
+  console.log("📥 Diagnose called with text:", inputText);
   try {
     const response = await axios.post(
       `${process.env.OPENAI_API_BASE}/chat/completions`,
       {
         model: "openai/gpt-3.5-turbo",
-        messages: [{ role: "user", content: text }]
+        messages: [{ role: "user", content: inputText }]
       },
       {
         headers: {
@@ -155,12 +158,35 @@ app.post("/diagnose", authMiddleware, async (req, res) => {
         }
       }
     );
-
-    res.json({ diagnosis: response.data.choices[0].message.content, image: savedImage });
+    res.json({ diagnosis: response.data.choices[0].message.content });
   } catch (err) {
     console.error("❌ AI Error:", JSON.stringify(err.response?.data || err.message, null, 2));
     res.status(500).json({ error: "AI failed", details: err.response?.data || err.message });
   }
+});
+
+// NEW: Upload route for lab results
+app.post("/lab/upload", authMiddleware, upload.single("file"), (req, res) => {
+  if (req.user.role !== "lab") {
+    return res.status(403).json({ error: "Access denied. Labs only." });
+  }
+  const file = req.file;
+  const patientId = req.body.patientId;
+  const type = req.body.type;
+  if (!file || !patientId || !type) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  const stmt = db.prepare(`
+    INSERT INTO lab_results (lab_id, patient_id, type, file_path, uploaded_at)
+    VALUES (?, ?, ?, ?, datetime('now'))
+  `);
+  stmt.run(req.user.id, patientId, type, file.path, function (err) {
+    if (err) {
+      console.error("Insert failed:", err.message);
+      return res.status(500).json({ error: "Database insert failed." });
+    }
+    res.json({ message: "Lab result uploaded successfully." });
+  });
 });
 
 app.listen(PORT, () => {
