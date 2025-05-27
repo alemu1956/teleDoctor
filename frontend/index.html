@@ -1,116 +1,13 @@
-<!-- frontend/index.html -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>teleDoctor – Patient Chat</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
-        .chatbox { background: #fff; padding: 15px; border-radius: 5px; box-shadow: 0 0 5px #ccc; margin-top: 20px; }
-        .chat-message { margin: 10px 0; }
-        .bot { color: #004d99; }
-        .user { color: #006600; text-align: right; }
-        input, button { padding: 10px; margin-top: 10px; width: 100%; }
-        #controls { display: flex; gap: 10px; }
-        #micBtn { width: auto; padding: 0 15px; }
-    </style>
-</head>
-<body>
-    <h1>🩺 teleDoctor – Chatbot Assistant</h1>
-    <div class="chatbox" id="chat">
-        <div class="chat-message bot">Hello! I'm teleDoctor. Let's begin with your name:</div>
-    </div>
-
-    <div id="controls">
-        <input type="text" id="userInput" placeholder="Type or speak your answer...">
-        <button id="micBtn" onclick="startListening()">🎤</button>
-    </div>
-    <button onclick="handleUserInput()">Send</button>
-
-    <script>
-        const chat = document.getElementById("chat");
-        const userInput = document.getElementById("userInput");
-
-        let step = 0;
-        let patientData = {};
-
-        const questions = [
-            "What is your age?",
-            "Which language do you prefer (e.g., Amharic, English)?",
-            "Please describe your main symptom."
-        ];
-
-        function appendMessage(text, sender) {
-            const msg = document.createElement("div");
-            msg.className = `chat-message ${sender}`;
-            msg.innerText = text;
-            chat.appendChild(msg);
-            chat.scrollTop = chat.scrollHeight;
-
-            if (sender === "bot") speak(text);
-        }
-
-        function handleUserInput() {
-            const input = userInput.value.trim();
-            if (!input) return;
-            appendMessage(input, "user");
-            userInput.value = "";
-
-            if (step === 0) {
-                patientData.name = input;
-            } else if (step === 1) {
-                patientData.age = parseInt(input);
-            } else if (step === 2) {
-                patientData.language = input;
-            } else if (step === 3) {
-                patientData.symptom = input;
-                appendMessage("Thank you. Sending your data to the doctor...", "bot");
-                sendToBackend(patientData);
-                step++;
-                return;
-            }
-
-            step++;
-            if (step < questions.length + 1) {
-                appendMessage(questions[step - 1], "bot");
-            }
-        }
-
-        async function sendToBackend(data) {
-            const res = await fetch("http://localhost:8000/patient/submit", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            appendMessage("✅ Response: " + JSON.stringify(json, null, 2), "bot");
-        }
-
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = "en-US";
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function startListening() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                userInput.value = transcript;
-            };
-
-            recognition.onerror = (event) => {
-                console.error("Speech recognition error:", event.error);
-                alert("Sorry, I didn't catch that. Please try again.");
-            };
-
-            recognition.start();
-        }
-    </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
