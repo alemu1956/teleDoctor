@@ -8,7 +8,7 @@ const bcrypt = require("bcrypt");
     id: 1,
     name: "Ministry Admin",
     email: "admin@health.gov.et",
-    password: hash,
+    password: korrado,
     role: "admin",
     approved: true
   };

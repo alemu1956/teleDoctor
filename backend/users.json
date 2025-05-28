@@ -32,5 +32,29 @@
       "role": "doctor",
       "approved": true
     }
-  ]
+  ],
+  {
+    "id": 1748469376614,
+    "name": "Elias Dimetros",
+    "email": "elias@hospital.et",
+    "password": "$2b$10$YhsDF0yyy/PwoLvET4Pdl.0nFRU4m77scy.sCh0D3F88E3MN5KZHC",
+    "role": "lab",
+    "approved": false
+  },
+  {
+    "id": 1748469566514,
+    "name": "Elias Dimetros",
+    "email": "dimetros@hospital.et",
+    "password": "$2b$10$8KrYg6rVpIGZ9.Sk5r0VY.ZpmSIIuzQcSrsSfKpRDINg8bup9lggO",
+    "role": "admin",
+    "approved": false
+  },
+  {
+    "id": 1748469741344,
+    "name": "EDimetros",
+    "email": "edimetros@hospital.et",
+    "password": "$2b$10$4pFin5osau5mlibJNw.TyOo4vw0jWcF8GJaNRuz0TzBTL6AfZ/QaC",
+    "role": "admin",
+    "approved": false
+  }
 ]

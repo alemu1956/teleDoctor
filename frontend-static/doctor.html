@@ -168,6 +168,33 @@
         alert("Failed to reach AI service.");
       }
     }
+    function startRecording() {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        console.log("🎙️ Mic access granted");
+
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        console.log("⏺️ Recording started");
+
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => {
+          audioChunks.push(e.data);
+          console.log("📥 Audio data received");
+        };
+
+        mediaRecorder.onstop = () => {
+          console.log("🛑 Recording stopped");
+          const audioBlob = new Blob(audioChunks);
+          const audioUrl = URL.createObjectURL(audioBlob);
+          document.getElementById("audioPlayer").src = audioUrl;
+
+          // Simulate transcript
+          document.getElementById("translatedText").value = "I have a bad headache";
+          console.log("📝 Transcript set");
+        };
+      }).catch(err => alert("Mic access denied: " + err));
+    }
   </script>
 
 </body>
