@@ -7,12 +7,9 @@
     <style>
         body {
             font-family: sans-serif;
-            background: #f0f4f8;
+            background: #f3f6fa;
             padding: 2em;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            height: 100vh;
+            margin: 0;
         }
 
         .card {
@@ -20,91 +17,82 @@
             padding: 2em;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
+            max-width: 600px;
+            margin: auto;
         }
 
         h2 {
-            margin-top: 0;
             color: #003366;
-        }
-
-        label {
-            display: block;
-            margin-top: 1em;
-            font-weight: bold;
         }
 
         input,
         select {
             width: 100%;
-            padding: 0.6em;
-            margin-top: 0.3em;
+            padding: 0.7em;
+            margin: 0.5em 0 1em 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
 
         button {
-            width: 100%;
-            padding: 0.8em;
+            padding: 0.8em 1.2em;
             background: #003366;
             color: white;
             border: none;
             border-radius: 5px;
-            margin-top: 1.5em;
             cursor: pointer;
         }
 
         #message {
             margin-top: 1em;
             font-weight: bold;
-            text-align: center;
         }
     </style>
 </head>
 
 <body>
-
     <div class="card">
-        <h2>📤 Upload Lab Result</h2>
-        <label for="patientId">Patient ID</label>
-        <input type="text" id="patientId" placeholder="Enter patient ID" required>
+        <h2>🧪 Lab Test Upload</h2>
 
-        <label for="testType">Test Type</label>
+        <label for="patientId">Patient ID:</label>
+        <input type="text" id="patientId" placeholder="Enter patient ID" required />
+
+        <label for="testType">Test Type:</label>
         <select id="testType">
-            <option value="">-- Select Test --</option>
             <option value="MRI">MRI</option>
             <option value="X-ray">X-ray</option>
-            <option value="CT Scan">CT Scan</option>
-            <option value="Blood Test">Blood Test</option>
-            <option value="Stool Test">Stool Test</option>
+            <option value="CT">CT</option>
+            <option value="Blood">Blood</option>
+            <option value="Stool">Stool</option>
         </select>
 
-        <label for="file">Upload File</label>
-        <input type="file" id="file" accept="*/*" required>
+        <label for="file">Upload File:</label>
+        <input type="file" id="file" required />
 
-        <button onclick="submitResult()">Upload Result</button>
+        <button onclick="uploadResult()">📤 Submit</button>
+
         <div id="message"></div>
     </div>
 
     <script>
-        async function submitResult() {
-            const token = localStorage.getItem("token");
-            if (!token || localStorage.getItem("role") !== "lab") {
-                alert("Access denied. Labs only.");
-                window.location.href = "login.html";
-                return;
-            }
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
 
+        if (!token || role !== "lab") {
+            alert("Access denied. Labs only.");
+            window.location.href = "login.html";
+        }
+
+        async function uploadResult() {
             const patientId = document.getElementById("patientId").value.trim();
             const testType = document.getElementById("testType").value;
             const fileInput = document.getElementById("file");
             const file = fileInput.files[0];
             const message = document.getElementById("message");
 
-            if (!patientId || !testType || !file) {
+            if (!patientId || !file) {
                 message.style.color = "red";
-                message.innerText = "All fields are required.";
+                message.innerText = "Please provide all required fields.";
                 return;
             }
 
@@ -114,27 +102,29 @@
             formData.append("file", file);
 
             try {
-                const res = await fetch("http://localhost:3000/lab/upload", {
+                const response = await fetch("http://localhost:3000/lab/upload", {
                     method: "POST",
-                    headers: { Authorization: "Bearer " + token },
+                    headers: {
+                        Authorization: "Bearer " + token
+                    },
                     body: formData
                 });
 
-                const data = await res.json();
-                if (res.ok) {
+                const result = await response.json();
+                if (response.ok) {
                     message.style.color = "green";
-                    message.innerText = data.message || "Upload successful.";
+                    message.innerText = "✅ Upload successful.";
                 } else {
                     message.style.color = "red";
-                    message.innerText = data.error || "Upload failed.";
+                    message.innerText = "❌ Upload failed: " + (result.error || "Unknown error");
                 }
             } catch (err) {
+                console.error(err);
                 message.style.color = "red";
-                message.innerText = "Network error.";
+                message.innerText = "❌ Error during upload.";
             }
         }
     </script>
-
 </body>
 
 </html>

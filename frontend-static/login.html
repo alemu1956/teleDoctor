@@ -131,6 +131,8 @@
           setTimeout(() => {
             if (data.role === "admin") {
               window.location.href = "admin.html";
+            } else if (data.role === "lab") {
+              window.location.href = "lab-dashboard.html";
             } else {
               window.location.href = "doctor.html";
             }

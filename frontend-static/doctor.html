@@ -27,7 +27,7 @@
 
     textarea {
       width: 100%;
-      height: 150px;
+      height: 120px;
       padding: 0.8em;
       border: 1px solid #ccc;
       border-radius: 5px;
@@ -44,13 +44,6 @@
       cursor: pointer;
     }
 
-    audio,
-    video,
-    canvas {
-      display: block;
-      margin-top: 1em;
-    }
-
     #diagnosis {
       margin-top: 2em;
       background: #e0f7fa;
@@ -58,25 +51,47 @@
       border-radius: 8px;
       color: #004d40;
     }
+
+    #status {
+      color: gray;
+      margin-top: 0.5em;
+      font-style: italic;
+    }
+
+    select {
+      margin-top: 1em;
+      padding: 0.6em;
+      border-radius: 5px;
+      width: 100%;
+    }
   </style>
 </head>
 
 <body>
   <div class="card">
-    <h2>🦧 Doctor Panel</h2>
+    <h2>🩺 Doctor Panel</h2>
 
-    <button onclick="startRecording()">🎧 Start Recording</button>
-    <button onclick="stopRecording()">🛑 Stop</button>
-    <audio id="audioPlayer" controls></audio>
+    <label for="language">Language of the patient:</label>
+    <select id="language">
+      <option value="am">Amharic</option>
+      <option value="om">Afan Oromo</option>
+      <option value="so">Somali</option>
+      <option value="aa">Afar</option>
+      <option value="ti">Tigrinya</option>
+    </select>
 
-    <button onclick="startCamera()">📷 Start Camera</button>
-    <button onclick="captureFrame()">🖼️ Capture Image</button>
-    <video id="video" width="320" height="240" autoplay></video>
-    <canvas id="snapshot" width="320" height="240" style="display:none;"></canvas>
+    <button onclick="startRecording()">🎙️ Start Recording</button>
+    <button onclick="stopRecording()">🛑 Stop Recording</button>
+    <p id="status">Not recording</p>
+    <audio id="audioPlayer" controls style="margin-top: 1em; display: block;"></audio>
 
-    <h3>📝 Translated & Editable Text</h3>
+    <h3>📝 Transcription in Local Language</h3>
+    <textarea id="localText" placeholder="Transcription will appear here..."></textarea>
+
+    <h3>🌐 English Translation</h3>
     <textarea id="translatedText" placeholder="Translation will appear here..."></textarea>
-    <button onclick="sendToAI()">🧠 Submit to AI</button>
+
+    <button onclick="sendToAI()">🤖 Submit to AI</button>
 
     <div id="diagnosis"></div>
   </div>
@@ -89,54 +104,60 @@
       window.location.href = "login.html";
     }
 
-    let mediaRecorder;
+    let mediaRecorder = null;
     let audioChunks = [];
-    let capturedImage = null;
 
     function startRecording() {
       navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        audioChunks = [];
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.start();
-        audioChunks = [];
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        document.getElementById("status").innerText = "🎧 Recording...";
+
+        mediaRecorder.ondataavailable = e => {
+          audioChunks.push(e.data);
+        };
+
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks);
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
           const audioUrl = URL.createObjectURL(audioBlob);
           document.getElementById("audioPlayer").src = audioUrl;
-          document.getElementById("translatedText").value = "I have a bad headache"; // Simulated
+
+          // Upload audio
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "recording.webm");
+          formData.append("language", document.getElementById("language").value);
+
+          fetch("http://localhost:3000/transcribe", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token },
+            body: formData
+          })
+            .then(res => res.json())
+            .then(data => {
+              document.getElementById("localText").value = data.local || "⚠️ Local transcription unavailable.";
+              document.getElementById("translatedText").value = data.english || "⚠️ English translation unavailable.";
+              document.getElementById("status").innerText = "📄 Transcription completed.";
+            })
+            .catch(err => {
+              console.error("❌ Transcription error:", err);
+              document.getElementById("status").innerText = "❌ Transcription failed.";
+            });
         };
-      }).catch(err => alert("Mic access denied: " + err));
+      }).catch(err => alert("Microphone access error: " + err));
     }
 
     function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state === "recording") {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
+        document.getElementById("status").innerText = "⏹️ Stopping...";
       }
-    }
-
-    let videoStream;
-    function startCamera() {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          videoStream = stream;
-          document.getElementById("video").srcObject = stream;
-        })
-        .catch(err => alert("Camera access denied: " + err));
-    }
-
-    function captureFrame() {
-      const video = document.getElementById("video");
-      const canvas = document.getElementById("snapshot");
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      capturedImage = canvas.toDataURL("image/png");
-      console.log("📸 Captured image:", capturedImage.substring(0, 50) + "...");
     }
 
     async function sendToAI() {
       const inputText = document.getElementById("translatedText").value.trim();
       if (!inputText) {
-        alert("Please enter or record text to diagnose.");
+        alert("Please record and transcribe first.");
         return;
       }
 
@@ -147,56 +168,21 @@
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token
           },
-          body: JSON.stringify({
-            text: inputText,
-            imageData: capturedImage
-          })
+          body: JSON.stringify({ text: inputText })
         });
 
         const data = await response.json();
-
         if (response.ok) {
           document.getElementById("diagnosis").innerHTML =
-            `<strong>Diagnosis:</strong><br>${data.diagnosis}<br>` +
-            (data.image ? `<br>📷 Image saved as: ${data.image}` : "");
+            `<strong>Diagnosis:</strong><br>${data.diagnosis}`;
         } else {
-          console.error("Submit error:", data);
-          alert("Failed to reach AI service: " + (data.error || "Unknown error"));
+          alert("❌ Failed to reach AI service: " + (data.error || "Unknown error"));
         }
       } catch (err) {
-        console.error("Submit error:", err);
-        alert("Failed to reach AI service.");
+        alert("❌ Failed to reach AI service.");
       }
     }
-    function startRecording() {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        console.log("🎙️ Mic access granted");
-
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-        console.log("⏺️ Recording started");
-
-        audioChunks = [];
-
-        mediaRecorder.ondataavailable = e => {
-          audioChunks.push(e.data);
-          console.log("📥 Audio data received");
-        };
-
-        mediaRecorder.onstop = () => {
-          console.log("🛑 Recording stopped");
-          const audioBlob = new Blob(audioChunks);
-          const audioUrl = URL.createObjectURL(audioBlob);
-          document.getElementById("audioPlayer").src = audioUrl;
-
-          // Simulate transcript
-          document.getElementById("translatedText").value = "I have a bad headache";
-          console.log("📝 Transcript set");
-        };
-      }).catch(err => alert("Mic access denied: " + err));
-    }
   </script>
-
 </body>
 
 </html>

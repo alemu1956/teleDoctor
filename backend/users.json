@@ -39,7 +39,7 @@
     "email": "elias@hospital.et",
     "password": "$2b$10$YhsDF0yyy/PwoLvET4Pdl.0nFRU4m77scy.sCh0D3F88E3MN5KZHC",
     "role": "lab",
-    "approved": false
+    "approved": true
   },
   {
     "id": 1748469566514,
@@ -47,7 +47,7 @@
     "email": "dimetros@hospital.et",
     "password": "$2b$10$8KrYg6rVpIGZ9.Sk5r0VY.ZpmSIIuzQcSrsSfKpRDINg8bup9lggO",
     "role": "admin",
-    "approved": false
+    "approved": true
   },
   {
     "id": 1748469741344,
@@ -55,6 +55,26 @@
     "email": "edimetros@hospital.et",
     "password": "$2b$10$4pFin5osau5mlibJNw.TyOo4vw0jWcF8GJaNRuz0TzBTL6AfZ/QaC",
     "role": "admin",
-    "approved": false
+    "approved": true
+  },
+  {
+    "id": 1748538797427,
+    "name": "Ghion",
+    "email": "lab-technician@hospital.et",
+    "password": "$2b$10$dDWoq7Lxd.FqLl4JHHV4bOr1/uG3KO.JT2yIlE.Xxa67nKh6XOBTW",
+    "role": "lab",
+    "cert": "1234",
+    "address": "Bole",
+    "approved": true
+  },
+  {
+    "id": 1748538930320,
+    "name": "Malifo",
+    "email": "malifo@health.gov.et",
+    "password": "$2b$10$21S4beY20DeyM2NISqH7Iu9WSyg1jwjKfN0SfBC.kn54Tl5Dj02WC",
+    "role": "lab",
+    "cert": "1234",
+    "address": "Kella",
+    "approved": true
   }
 ]

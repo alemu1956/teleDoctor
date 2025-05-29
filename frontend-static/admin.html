@@ -1,69 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>teleDoctor – Admin Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Admin Logs – teleDoctor</title>
   <style>
     body {
       font-family: sans-serif;
-      margin: 0;
-      background: #f0f4f8;
-    }
-    nav {
-      background: #003366;
-      color: white;
-      padding: 1em 2em;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    nav h1 {
-      margin: 0;
-      font-size: 1.2em;
-    }
-    nav button {
-      background: #cc0000;
-      color: white;
-      border: none;
-      padding: 0.5em 1em;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    main {
+      background: #f2f2f2;
       padding: 2em;
     }
-    .link-box {
+
+    .card {
       background: white;
-      padding: 1.5em;
-      margin-bottom: 1em;
+      padding: 2em;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+      margin: auto;
     }
-    .link-box a {
-      text-decoration: none;
-      color: #003366;
+
+    h2 {
+      color: #004466;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 0.6em;
+      text-align: left;
+    }
+
+    th {
+      background-color: #004466;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    #status {
+      margin-top: 1em;
+      color: red;
       font-weight: bold;
     }
   </style>
 </head>
+
 <body>
-
-  <nav>
-    <h1>🩺 teleDoctor – Ministry Admin Panel</h1>
-    <button onclick="logout()">Logout</button>
-  </nav>
-
-  <main>
-    <h2>Welcome, Ministry Administrator</h2>
-
-    <div class="link-box">
-      <a href="approve.html">✅ Review and Approve Pending Users</a>
-    </div>
-
-    <div class="link-box">
-      <a href="logs.html">📋 View Approval Logs</a>
-    </div>
-  </main>
+  <div class="card">
+    <h2>📋 Admin Logs</h2>
+    <div id="status">Loading logs...</div>
+    <table id="logsTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Admin</th>
+          <th>Action</th>
+          <th>Target User</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
     const token = localStorage.getItem("token");
@@ -74,11 +80,40 @@
       window.location.href = "login.html";
     }
 
-    function logout() {
-      localStorage.clear();
-      window.location.href = "login.html";
-    }
-  </script>
+    fetch("http://localhost:3000/logs", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("logsTable");
+        const tbody = table.querySelector("tbody");
 
+        if (!Array.isArray(data) || data.length === 0) {
+          document.getElementById("status").innerText = "No logs found.";
+          return;
+        }
+
+        document.getElementById("status").style.display = "none";
+        table.style.display = "table";
+
+        data.forEach(log => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${new Date(log.timestamp).toLocaleString()}</td>
+            <td>${log.admin}</td>
+            <td>${log.action}</td>
+            <td>${log.target.name} (${log.target.email})</td>
+          `;
+          tbody.appendChild(row);
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById("status").innerText = "Unable to fetch logs.";
+      });
+  </script>
 </body>
+
 </html>
