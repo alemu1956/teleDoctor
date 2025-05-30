@@ -15,24 +15,22 @@
     "role": "doctor",
     "approved": true
   },
-  [
-    {
-      "id": 11,
-      "name": "Ministry Admin",
-      "email": "admin@health.gov.et",
-      "password": "$2b$10$Lk7NQ2h9bfN85BtsYDqD5OUHbADNd4VZk8ZBfrKnNuvNdMrBoNDGy",
-      "role": "admin",
-      "approved": true
-    },
-    {
-      "id": 12,
-      "name": "Dr. Alemu",
-      "email": "doctor@hospital.et",
-      "password": "$2b$10$7AkRUKTZUbGqzMwWozvL4uU3M6MpPiViJIX9Cv6/AsvTu9r3geYcO",
-      "role": "doctor",
-      "approved": true
-    }
-  ],
+  {
+    "id": 11,
+    "name": "Ministry Admin",
+    "email": "admin@health.gov.et",
+    "password": "$2b$10$Lk7NQ2h9bfN85BtsYDqD5OUHbADNd4VZk8ZBfrKnNuvNdMrBoNDGy",
+    "role": "admin",
+    "approved": true
+  },
+  {
+    "id": 12,
+    "name": "Dr. Alemu",
+    "email": "doctor@hospital.et",
+    "password": "$2b$10$7AkRUKTZUbGqzMwWozvL4uU3M6MpPiViJIX9Cv6/AsvTu9r3geYcO",
+    "role": "doctor",
+    "approved": true
+  },
   {
     "id": 1748469376614,
     "name": "Elias Dimetros",
@@ -75,6 +73,16 @@
     "role": "lab",
     "cert": "1234",
     "address": "Kella",
+    "approved": true
+  },
+  {
+    "id": 1748612250087,
+    "name": "Dr. John Doe",
+    "email": "doctor@example.com",
+    "password": "$2b$10$0M8Vmistr4SNg8AMGR5zcO0mUQkaMQTKXp68E5KNeXokK2B0YzriO",
+    "role": "doctor",
+    "cert": "cert123",
+    "address": "123 Main Street",
     "approved": true
   }
 ]

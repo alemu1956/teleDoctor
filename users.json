@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1726842184323,
+    "name": "Dr. John Doe",
+    "email": "doctor@example.com",
+    "password": "$2a$10$1234567890123456789012",
+    "role": "doctor",
+    "cert": "cert123",
+    "address": "123 Main Street",
+    "approved": true
+  }
+]
