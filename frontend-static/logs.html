@@ -1,115 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 
 <head>
-  <meta charset="UTF-8">
-  <title>teleDoctor – Admin Logs</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f7fa;
-      margin: 0;
-      padding: 2em;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 2em;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    }
-
-    h2 {
-      color: #004466;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1em;
-    }
-
-    th,
-    td {
-      border: 1px solid #ccc;
-      padding: 0.8em;
-      text-align: left;
-    }
-
-    th {
-      background-color: #004466;
-      color: white;
-    }
-
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
-    #message {
-      margin-top: 1em;
-      color: red;
-      font-weight: bold;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleDoctor - Login</title>
+  <meta name="description" content="Login to TeleDoctor" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-  <div class="container">
-    <h2>📜 Ministry Admin Action Logs</h2>
-    <table id="logsTable">
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Admin Email</th>
-          <th>Action</th>
-          <th>Target Name</th>
-          <th>Target Email</th>
-          <th>Role</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p id="message"></p>
-  </div>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+
+  <section class="bg-white p-8 rounded shadow-md w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">TeleDoctor Login</h1>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label for="email" class="block mb-1 font-medium">Email</label>
+        <input type="email" id="email" required
+          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      <div>
+        <label for="password" class="block mb-1 font-medium">Password</label>
+        <input type="password" id="password" required
+          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" type="submit"
+        id="login-btn">Login</button>
+      <p id="error-msg" class="text-red-600 mt-2 hidden"></p>
+    </form>
+  </section>
 
   <script>
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+    const loginBtn = document.getElementById('login-btn');
 
-    if (!token || role !== "admin") {
-      alert("Access denied. Ministry Admins only.");
-      window.location.href = "login.html";
-    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.classList.add('hidden');
+      loginBtn.disabled = true;
 
-    fetch("http://localhost:3000/logs", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        const table = document.getElementById("logsTable").getElementsByTagName("tbody")[0];
-        if (data.length === 0) {
-          document.getElementById("message").innerText = "No logs available.";
-          return;
-        }
-        data.forEach(log => {
-          const row = table.insertRow();
-          row.insertCell(0).innerText = new Date(log.timestamp).toLocaleString();
-          row.insertCell(1).innerText = log.admin;
-          row.insertCell(2).innerText = log.action;
-          row.insertCell(3).innerText = log.target?.name || "-";
-          row.insertCell(4).innerText = log.target?.email || "-";
-          row.insertCell(5).innerText = log.target?.role || "-";
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('http://localhost:3000/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
         });
-      })
-      .catch(err => {
-        console.error("Log fetch error:", err);
-        document.getElementById("message").innerText = "Unable to fetch logs.";
-      });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Login failed');
+        }
+
+        const data = await response.json();
+        // Save JWT token to localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+
+        // Redirect to doctor panel
+        window.location.href = 'doctor.html';
+
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
+      }
+    });
   </script>
+
 </body>
 
 </html>

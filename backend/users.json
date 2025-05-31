@@ -84,5 +84,29 @@
     "cert": "cert123",
     "address": "123 Main Street",
     "approved": true
+  },
+  {
+    "id": 1748678440841,
+    "name": "Dr. Tatayewa",
+    "email": "tatayewa@hospital.et",
+    "password": "$2b$10$5z6XeMgNYQZjf91IfwDd2eMuSRu/Fe5fm377hRck7mqd1ceUZ453e",
+    "role": "Head Doctor",
+    "approved": true
+  },
+  {
+    "id": 1,
+    "name": "Dr. Alem",
+    "email": "doctor@example.com",
+    "password": "$2a$10$6N1VLjD77CzRZx0W5QhkUu7n4jhqXU.qkUsSIkONv5rn2GxgT9LiS",
+    "role": "doctor",
+    "approved": true
+  },
+  {
+    "id": 1748705089927,
+    "name": "Test Doctor",
+    "email": "doctor@test.com",
+    "password": "$2b$10$oymm9TzXa69QyL1XNe6eAeOuRK.2QpTtZtMzLujmBWqbPjzm7GAQW",
+    "role": "doctor",
+    "approved": true
   }
 ]

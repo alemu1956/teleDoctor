@@ -1,154 +1,103 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeleDoctor - Doctor Panel (Live Transcription)</title>
-  <meta name="description" content="Doctor panel with live audio transcription for local languages." />
-  <!-- Tailwind CSS CDN (stable) -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet" />
+  <title>TeleDoctor - Doctor Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-50 min-h-screen flex flex-col">
+  <main class="flex-grow flex flex-col items-center justify-center p-6">
+    <h1 class="text-3xl font-bold mb-4 text-blue-600">Audio Recording & Transcription</h1>
+    <label for="language-select" class="mb-2">Select Language:</label>
+    <select id="language-select" class="mb-6 p-2 border rounded">
+      <option value="am">Amharic</option>
+      <option value="om">Oromo</option>
+      <option value="ti">Tigrinya</option>
+      <option value="so">Somali</option>
+      <option value="aa">Afar</option>
+    </select>
 
-  <!-- Header -->
-  <header class="bg-white shadow-md p-4 flex items-center justify-between">
-    <div id="logo-placeholder" aria-label="Company Logo"
-      class="text-blue-600 font-bold text-xl cursor-default select-none">
-      FOAMACON LOGO
+    <div class="mb-4">
+      <button id="start-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Start Recording</button>
+      <button id="stop-btn" disabled class="bg-red-600 text-white px-4 py-2 rounded ml-4">Stop Recording</button>
     </div>
-    <nav>
-      <ul class="flex gap-6 text-blue-600 font-semibold text-lg">
-        <li><a href="#transcription-panel" class="hover:underline">Transcription</a></li>
-        <li><a href="#contact" class="hover:underline">Contact</a></li>
-        <li><a href="#address" class="hover:underline">Address</a></li>
-      </ul>
-    </nav>
-  </header>
 
-  <!-- Main Content -->
-  <main class="flex-grow flex items-center justify-center p-6">
-    <section id="transcription-panel" class="bg-white shadow-lg rounded-lg p-8 max-w-3xl w-full"
-      aria-label="Live Audio Recording and Transcription Section">
-      <h1 class="text-4xl font-extrabold text-blue-600 mb-8 text-center">
-        Live Audio Recording & Transcription
-      </h1>
+    <audio id="audio-playback" controls class="mb-6 w-full max-w-md"></audio>
 
-      <!-- Language selector -->
-      <label for="language-select" class="block mb-2 font-medium">Select Language:</label>
-      <select id="language-select" name="language" required
-        class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 mb-6 w-full max-w-xs"
-        aria-label="Select language">
-        <option value="am">Amharic</option>
-        <option value="om">Oromo</option>
-        <option value="ti">Tigrinya</option>
-        <option value="so">Somali</option>
-        <option value="aa">Afar</option>
-      </select>
-
-      <!-- Recording controls -->
-      <div class="mb-4">
-        <button id="record-btn" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 disabled:bg-gray-400">
-          Start Live Transcription
-        </button>
-        <button id="stop-btn" class="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 ml-4 disabled:bg-gray-400"
-          disabled>
-          Stop
-        </button>
-      </div>
-
-      <!-- Transcription display -->
-      <pre id="transcription-result"
-        class="bg-gray-100 p-6 rounded text-gray-800 min-h-[10rem] whitespace-pre-wrap select-text" aria-live="polite"
-        role="region" aria-atomic="true">
-No transcription yet.
-      </pre>
-    </section>
+    <pre id="transcription-result" class="p-4 border rounded max-w-md min-h-[6rem] whitespace-pre-wrap"></pre>
   </main>
 
-  <!-- Footer -->
-  <footer id="contact" class="bg-white shadow-inner border-t border-gray-200 p-6 text-center text-gray-600 text-sm">
-    <div class="max-w-3xl mx-auto space-y-4">
-      <p><strong>Contact Us:</strong> +44 123 456 7890 | info@foamacon.com</p>
-      <p id="address"><strong>Address:</strong> 123 Industrial Park, London, UK</p>
-      <p>© 2025 FOAMACON. All rights reserved.</p>
-    </div>
-  </footer>
-
   <script>
-    let mediaRecorder;
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const playback = document.getElementById('audio-playback');
     const transcriptionResult = document.getElementById('transcription-result');
     const languageSelect = document.getElementById('language-select');
-    const recordBtn = document.getElementById('record-btn');
-    const stopBtn = document.getElementById('stop-btn');
 
-    recordBtn.onclick = async () => {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Your browser does not support audio recording.');
-        return;
-      }
+    let mediaRecorder;
+    let audioChunks = [];
 
+    startBtn.onclick = async () => {
+      transcriptionResult.textContent = '';
+      audioChunks = [];
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
 
-        transcriptionResult.textContent = '';
-        recordBtn.disabled = true;
-        stopBtn.disabled = false;
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
 
-        mediaRecorder.start(3000); // chunk length: 3 seconds
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          playback.src = URL.createObjectURL(audioBlob);
 
-        mediaRecorder.ondataavailable = async (event) => {
-          if (event.data.size > 0) {
-            const formData = new FormData();
-            formData.append('audio', event.data, 'chunk.webm');
-            formData.append('language', languageSelect.value);
+          // Prepare form data
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.webm');
+          formData.append('language', languageSelect.value);
 
-            const token = localStorage.getItem('token');
-            if (!token) {
-              transcriptionResult.textContent = 'Error: Please login to get a token.';
-              return;
+          // Get JWT token from localStorage (must login first and save token!)
+          const token = localStorage.getItem('token');
+          if (!token) {
+            transcriptionResult.textContent = 'Error: Please login to get a token.';
+            return;
+          }
+
+          transcriptionResult.textContent = 'Transcribing... please wait.';
+
+          try {
+            const response = await fetch('http://localhost:3000/transcribe', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token },
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const text = await response.text();
+              throw new Error(text);
             }
 
-            try {
-              const response = await fetch('http://localhost:3000/transcribe', {
-                method: 'POST',
-                headers: {
-                  'Authorization': 'Bearer ' + token
-                },
-                body: formData
-              });
-
-              if (response.ok) {
-                const data = await response.json();
-                transcriptionResult.textContent += data.local + ' ';
-              } else {
-                const errorText = await response.text();
-                console.error('Transcription error:', errorText);
-              }
-            } catch (err) {
-              console.error('Fetch error:', err.message);
-            }
+            const data = await response.json();
+            transcriptionResult.textContent = `Local transcription:\n${data.local}\n\nEnglish translation:\n${data.english}`;
+          } catch (err) {
+            transcriptionResult.textContent = 'Error: ' + err.message;
           }
         };
 
-        mediaRecorder.onstop = () => {
-          recordBtn.disabled = false;
-          stopBtn.disabled = true;
-          console.log('Live transcription stopped.');
-        };
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
       } catch (err) {
         alert('Could not start recording: ' + err.message);
-        recordBtn.disabled = false;
-        stopBtn.disabled = true;
       }
     };
 
     stopBtn.onclick = () => {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
+      mediaRecorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
     };
   </script>
 </body>

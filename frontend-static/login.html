@@ -1,148 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 
 <head>
   <meta charset="UTF-8" />
-  <title>teleDoctor – Login / Register</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f0f4f8;
-      padding: 2em;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .card {
-      background: white;
-      padding: 2em;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-
-    h2 {
-      margin-top: 0;
-      color: #003366;
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 0.6em;
-      margin: 0.5em 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    button {
-      width: 100%;
-      padding: 0.7em;
-      background: #003366;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      margin-top: 1em;
-      cursor: pointer;
-    }
-
-    p {
-      text-align: center;
-      margin-top: 1em;
-    }
-
-    #message {
-      text-align: center;
-      margin-top: 1em;
-      font-weight: bold;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleDoctor - Login</title>
+  <meta name="description" content="Login to TeleDoctor" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
 
-  <div class="card">
-    <h2 id="formTitle">Login</h2>
-    <input type="text" id="name" placeholder="Full Name" style="display:none;" />
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <select id="role" style="display:none;">
-      <option value="doctor">Doctor</option>
-      <option value="admin">Admin</option>
-      <option value="lab">Lab</option>
-    </select>
-    <button id="submit">Login</button>
-    <p><a href="#" id="toggleMode">Don't have an account? Register</a></p>
-    <p>🧪 Are you a lab? <a href="lab-register.html">Register here</a></p>
-    <div id="message"></div>
-  </div>
+  <section class="bg-white p-8 rounded shadow-md w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">TeleDoctor Login</h1>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label for="email" class="block mb-1 font-medium">Email</label>
+        <input type="email" id="email" required
+          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      <div>
+        <label for="password" class="block mb-1 font-medium">Password</label>
+        <input type="password" id="password" required
+          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" type="submit"
+        id="login-btn">Login</button>
+      <p id="error-msg" class="text-red-600 mt-2 hidden"></p>
+    </form>
+  </section>
 
   <script>
-    const isRegistering = { value: false };
-    const api = "http://localhost:3000/auth";
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+    const loginBtn = document.getElementById('login-btn');
 
-    const nameField = document.getElementById('name');
-    const roleField = document.getElementById('role');
-    const email = document.getElementById('email');
-    const password = document.getElementById('password');
-    const message = document.getElementById('message');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.classList.add('hidden');
+      loginBtn.disabled = true;
 
-    document.getElementById('toggleMode').onclick = () => {
-      isRegistering.value = !isRegistering.value;
-      document.getElementById('formTitle').innerText = isRegistering.value ? "Register" : "Login";
-      document.getElementById('submit').innerText = isRegistering.value ? "Register" : "Login";
-      nameField.style.display = isRegistering.value ? "block" : "none";
-      roleField.style.display = isRegistering.value ? "block" : "none";
-      message.innerText = "";
-    };
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
 
-    document.getElementById('submit').onclick = async () => {
-      const user = {
-        name: nameField.value.trim(),
-        email: email.value.trim(),
-        password: password.value.trim(),
-        role: roleField.value
-      };
-
-      if (isRegistering.value) {
-        const res = await fetch(`${api}/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user)
+      try {
+        const response = await fetch('http://localhost:3000/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
-        message.style.color = data.message ? "green" : "red";
-        message.innerText = data.message || data.error || "Something went wrong.";
-      } else {
-        const res = await fetch(`${api}/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email, password: user.password })
-        });
-        const data = await res.json();
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("role", data.role);
-          message.style.color = "green";
-          message.innerText = "✅ Login successful.";
-          setTimeout(() => {
-            if (data.role === "admin") {
-              window.location.href = "admin.html";
-            } else if (data.role === "lab") {
-              window.location.href = "lab-dashboard.html";
-            } else {
-              window.location.href = "doctor.html";
-            }
-          }, 1000);
-        } else {
-          message.style.color = "red";
-          message.innerText = data.error || "Login failed.";
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Login failed');
         }
+
+        const data = await response.json();
+        // Save JWT token to localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);
+
+        // Redirect to doctor panel
+        window.location.href = 'doctor.html';
+
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.remove('hidden');
+      } finally {
+        loginBtn.disabled = false;
       }
-    };
+    });
   </script>
 
 </body>
