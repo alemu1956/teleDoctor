@@ -4,102 +4,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeleDoctor - Doctor Panel</title>
+  <title>MalifoClinic - Doctor Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-50 min-h-screen flex flex-col">
-  <main class="flex-grow flex flex-col items-center justify-center p-6">
-    <h1 class="text-3xl font-bold mb-4 text-blue-600">Audio Recording & Transcription</h1>
-    <label for="language-select" class="mb-2">Select Language:</label>
-    <select id="language-select" class="mb-6 p-2 border rounded">
-      <option value="am">Amharic</option>
-      <option value="om">Oromo</option>
-      <option value="ti">Tigrinya</option>
-      <option value="so">Somali</option>
-      <option value="aa">Afar</option>
-    </select>
 
-    <div class="mb-4">
-      <button id="start-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Start Recording</button>
-      <button id="stop-btn" disabled class="bg-red-600 text-white px-4 py-2 rounded ml-4">Stop Recording</button>
-    </div>
+  <header class="bg-white shadow-md p-4 flex items-center justify-between">
+    <div class="text-green-700 font-bold text-xl">MalifoClinic Doctor Portal</div>
+    <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+  </header>
 
-    <audio id="audio-playback" controls class="mb-6 w-full max-w-md"></audio>
+  <main class="flex-grow p-6 max-w-4xl mx-auto flex flex-col gap-8">
 
-    <pre id="transcription-result" class="p-4 border rounded max-w-md min-h-[6rem] whitespace-pre-wrap"></pre>
+    <!-- Patient Audio Playback Section -->
+    <section aria-label="Patient Audio Playback" class="bg-white shadow-lg rounded-lg p-8">
+      <h2 class="text-3xl font-bold mb-6 text-center text-green-700">Patient Audio</h2>
+
+      <audio id="patient-audio" controls class="block mb-6 w-full rounded border border-gray-300"
+        aria-label="Patient audio playback"></audio>
+
+      <button id="load-audio-btn"
+        class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 w-full max-w-xs mx-auto block">
+        Load Latest Patient Audio
+      </button>
+      <p id="audio-status" class="mt-2 text-center text-gray-600"></p>
+    </section>
+
+    <!-- AI Diagnosis Chat Section -->
+    <section aria-label="AI Diagnosis Chat" class="bg-white shadow-lg rounded-lg p-8 flex flex-col">
+      <h2 class="text-3xl font-bold mb-6 text-center text-green-700">AI Diagnosis Chat</h2>
+
+      <div id="chat-box"
+        class="flex flex-col gap-4 overflow-auto border border-gray-300 rounded p-4 h-[350px] mb-6 bg-white">
+        <!-- Chat messages appear here -->
+      </div>
+
+      <form id="chat-form" class="flex gap-2" autocomplete="off">
+        <input type="text" id="user-input" placeholder="Enter symptom or question..." required
+          class="flex-grow border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
+        <button type="submit" class="bg-green-600 text-white px-6 rounded hover:bg-green-700">Send</button>
+      </form>
+    </section>
+
   </main>
 
   <script>
-    const startBtn = document.getElementById('start-btn');
-    const stopBtn = document.getElementById('stop-btn');
-    const playback = document.getElementById('audio-playback');
-    const transcriptionResult = document.getElementById('transcription-result');
-    const languageSelect = document.getElementById('language-select');
+    const logoutBtn = document.getElementById('logout-btn');
+    const loadAudioBtn = document.getElementById('load-audio-btn');
+    const patientAudio = document.getElementById('patient-audio');
+    const audioStatus = document.getElementById('audio-status');
+    const chatBox = document.getElementById('chat-box');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
 
-    let mediaRecorder;
-    let audioChunks = [];
+    // Token check
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first!');
+      window.location.href = '/login.html';
+    }
 
-    startBtn.onclick = async () => {
-      transcriptionResult.textContent = '';
-      audioChunks = [];
+    logoutBtn.onclick = () => {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    };
+
+    // Load latest patient audio URL from backend
+    loadAudioBtn.onclick = async () => {
+      audioStatus.textContent = '';
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          playback.src = URL.createObjectURL(audioBlob);
-
-          // Prepare form data
-          const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
-          formData.append('language', languageSelect.value);
-
-          // Get JWT token from localStorage (must login first and save token!)
-          const token = localStorage.getItem('token');
-          if (!token) {
-            transcriptionResult.textContent = 'Error: Please login to get a token.';
-            return;
-          }
-
-          transcriptionResult.textContent = 'Transcribing... please wait.';
-
-          try {
-            const response = await fetch('http://localhost:3000/transcribe', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + token },
-              body: formData,
-            });
-
-            if (!response.ok) {
-              const text = await response.text();
-              throw new Error(text);
-            }
-
-            const data = await response.json();
-            transcriptionResult.textContent = `Local transcription:\n${data.local}\n\nEnglish translation:\n${data.english}`;
-          } catch (err) {
-            transcriptionResult.textContent = 'Error: ' + err.message;
-          }
-        };
-
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
+        const res = await fetch('http://localhost:3000/patient/latest-audio', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Failed to load audio');
+        const data = await res.json();
+        if (data.audioUrl) {
+          patientAudio.src = data.audioUrl;
+          audioStatus.textContent = 'Latest patient audio loaded.';
+        } else {
+          audioStatus.textContent = 'No patient audio available.';
+        }
       } catch (err) {
-        alert('Could not start recording: ' + err.message);
+        audioStatus.textContent = err.message;
       }
     };
 
-    stopBtn.onclick = () => {
-      mediaRecorder.stop();
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-    };
+    // Chat history for diagnosis
+    let chatMessages = [];
+
+    // Append chat messages to chat box
+    function appendChatMessage(role, text) {
+      const div = document.createElement('div');
+      div.classList.add('max-w-[75%]', 'px-4', 'py-3', 'rounded-lg', 'whitespace-pre-wrap');
+      if (role === 'user') {
+        div.classList.add('self-end', 'bg-green-600', 'text-white');
+      } else {
+        div.classList.add('self-start', 'bg-gray-200', 'text-gray-900');
+      }
+      div.textContent = text;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Send message to AI for diagnosis
+    async function sendChatMessage(message) {
+      chatMessages.push({ role: 'user', content: message });
+      appendChatMessage('user', message);
+      userInput.value = '';
+      userInput.disabled = true;
+
+      try {
+        const res = await fetch('http://localhost:3000/diagnose', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ messages: chatMessages })
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText);
+        }
+
+        const data = await res.json();
+        const aiReply = data.reply;
+
+        chatMessages.push({ role: 'assistant', content: aiReply });
+        appendChatMessage('assistant', aiReply);
+      } catch (err) {
+        appendChatMessage('assistant', 'Error: ' + err.message);
+      } finally {
+        userInput.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    chatForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const msg = userInput.value.trim();
+      if (msg) sendChatMessage(msg);
+    });
   </script>
+
 </body>
 
 </html>

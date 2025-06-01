@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MalifoClinic - Interpreter Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <header class="bg-white shadow-md p-4 flex items-center justify-between">
+        <div class="text-green-600 font-bold text-xl">MalifoClinic Interpreter Portal</div>
+        <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
+    </header>
+
+    <main class="flex-grow p-6 max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-center text-green-700">Interpreter Dashboard</h1>
+
+        <!-- Audio player to listen to patient's audio -->
+        <section class="mb-8">
+            <h2 class="text-xl font-semibold mb-2">Patient Audio</h2>
+            <audio id="patient-audio" controls class="w-full rounded border border-gray-300"></audio>
+            <button id="fetch-audio-btn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Load Latest Patient Audio
+            </button>
+        </section>
+
+        <!-- Translation input -->
+        <section>
+            <h2 class="text-xl font-semibold mb-2">Provide Translation</h2>
+            <textarea id="translation-text" rows="6" class="w-full border border-gray-300 rounded p-3"
+                placeholder="Type translation here..."></textarea>
+            <button id="submit-translation-btn"
+                class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Submit Translation
+            </button>
+        </section>
+
+        <!-- Status message -->
+        <div id="status-message" class="mt-4 text-center text-red-600"></div>
+    </main>
+
+    <script>
+        const logoutBtn = document.getElementById('logout-btn');
+        const fetchAudioBtn = document.getElementById('fetch-audio-btn');
+        const patientAudio = document.getElementById('patient-audio');
+        const translationText = document.getElementById('translation-text');
+        const submitTranslationBtn = document.getElementById('submit-translation-btn');
+        const statusMessage = document.getElementById('status-message');
+
+        // Check token, redirect if not logged in
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login first!');
+            window.location.href = '/login.html';
+        }
+
+        logoutBtn.onclick = () => {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        };
+
+        fetchAudioBtn.onclick = async () => {
+            statusMessage.textContent = '';
+            try {
+                // Fetch the latest patient audio URL from backend (you need to implement this backend route)
+                const res = await fetch('http://localhost:3000/patient/latest-audio', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (!res.ok) {
+                    throw new Error('Failed to fetch audio');
+                }
+
+                const data = await res.json();
+                if (data.audioUrl) {
+                    patientAudio.src = data.audioUrl;
+                    statusMessage.textContent = 'Loaded latest patient audio.';
+                } else {
+                    statusMessage.textContent = 'No audio found.';
+                }
+            } catch (err) {
+                statusMessage.textContent = err.message;
+            }
+        };
+
+        submitTranslationBtn.onclick = async () => {
+            statusMessage.textContent = '';
+            const translation = translationText.value.trim();
+            if (!translation) {
+                statusMessage.textContent = 'Please enter a translation.';
+                return;
+            }
+            try {
+                // Submit the translation to backend (implement backend route for saving)
+                const res = await fetch('http://localhost:3000/interpreter/submit-translation', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ translation })
+                });
+
+                if (!res.ok) {
+                    throw new Error('Failed to submit translation');
+                }
+
+                statusMessage.textContent = 'Translation submitted successfully!';
+                translationText.value = '';
+            } catch (err) {
+                statusMessage.textContent = err.message;
+            }
+        };
+    </script>
+</body>
+
+</html>
