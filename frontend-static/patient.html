@@ -4,26 +4,28 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MalifoClinic - Patient Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>TeleDoctor - Patient Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0fdf4;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col">
-
+<body class="flex flex-col min-h-screen">
     <header class="bg-white shadow-md p-4 flex items-center justify-between">
-        <div class="text-green-600 font-bold text-xl">MalifoClinic Patient Portal</div>
+        <div class="text-green-700 font-bold text-xl">TeleDoctor - Patient Portal</div>
         <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
     </header>
 
-    <main class="flex-grow p-6 max-w-3xl mx-auto flex flex-col gap-6">
+    <main class="flex-grow p-6 max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-center text-green-700">Record Your Symptoms</h1>
 
-        <section aria-label="Audio Recording and Symptom Upload" class="bg-white shadow-lg rounded-lg p-8">
-            <h1 class="text-3xl font-bold mb-6 text-center text-green-700">Record Your Symptoms</h1>
-
+        <div class="bg-white shadow-lg rounded-lg p-8">
             <label for="language-select" class="block mb-2 font-medium">Select Language:</label>
             <select id="language-select" required
-                class="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 mb-6 w-full max-w-xs"
-                aria-label="Select language">
+                class="border border-gray-300 rounded-md px-4 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-green-400 w-full max-w-xs">
                 <option value="am">Amharic</option>
                 <option value="om">Oromo</option>
                 <option value="ti">Tigrinya</option>
@@ -31,60 +33,58 @@
                 <option value="aa">Afar</option>
             </select>
 
-            <div class="mb-4 flex gap-4">
+            <div class="flex gap-4 mb-6">
                 <button id="record-btn"
-                    class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 disabled:bg-gray-400 flex-grow">
-                    Start Recording
-                </button>
+                    class="bg-green-600 text-white px-6 py-3 rounded flex-grow hover:bg-green-700">Start
+                    Recording</button>
                 <button id="stop-btn" disabled
-                    class="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 disabled:bg-gray-400 flex-grow">
-                    Stop Recording
-                </button>
+                    class="bg-red-600 text-white px-6 py-3 rounded flex-grow hover:bg-red-700">Stop Recording</button>
             </div>
 
-            <audio id="audio-playback" controls class="block mb-6 w-full rounded border border-gray-300"
-                aria-label="Audio playback"></audio>
+            <audio id="audio-playback" controls class="w-full mb-6 rounded border border-gray-300"></audio>
+
+            <div class="flex gap-4 mb-6">
+                <button id="submit-btn" disabled
+                    class="bg-blue-600 text-white px-6 py-3 rounded flex-grow hover:bg-blue-700">Submit
+                    Recording</button>
+            </div>
 
             <pre id="transcription-result"
-                class="bg-gray-100 p-6 rounded text-gray-800 min-h-[6rem] whitespace-pre-wrap select-text"
-                aria-live="polite" role="region" aria-atomic="true">
-No transcription yet.
-      </pre>
+                class="bg-gray-100 p-6 rounded text-gray-800 min-h-[6rem] whitespace-pre-wrap select-text">No transcription yet.</pre>
 
             <pre id="diagnosis-result"
-                class="bg-gray-100 p-6 rounded text-gray-900 min-h-[6rem] whitespace-pre-wrap select-text"
-                aria-live="polite" role="region" aria-atomic="true">
-No diagnosis yet.
-      </pre>
-        </section>
-
+                class="bg-gray-100 p-6 rounded text-gray-900 min-h-[6rem] whitespace-pre-wrap select-text">No diagnosis yet.</pre>
+        </div>
     </main>
 
     <script>
         const recordBtn = document.getElementById('record-btn');
         const stopBtn = document.getElementById('stop-btn');
+        const submitBtn = document.getElementById('submit-btn');
         const playback = document.getElementById('audio-playback');
+        const languageSelect = document.getElementById('language-select');
         const transcriptionResult = document.getElementById('transcription-result');
         const diagnosisResult = document.getElementById('diagnosis-result');
-        const languageSelect = document.getElementById('language-select');
         const logoutBtn = document.getElementById('logout-btn');
 
-        // Check token on load
         const token = localStorage.getItem('token');
         if (!token) {
             alert('Please login first!');
-            window.location.href = '/login.html';
+            window.location.href = 'login.html';
         }
 
         logoutBtn.onclick = () => {
             localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            localStorage.removeItem('role');
+            window.location.href = 'login.html';
         };
 
         let mediaRecorder;
         let audioChunks = [];
+        let lastSavedFilename = '';
 
         recordBtn.onclick = async () => {
+            console.log("✅ Start Recording button clicked");
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 alert('Your browser does not support audio recording.');
                 return;
@@ -106,13 +106,9 @@ No diagnosis yet.
 
                     const formData = new FormData();
                     formData.append('audio', audioBlob, 'recording.webm');
-                    formData.append('language', languageSelect.value);
 
                     try {
-                        transcriptionResult.textContent = 'Transcribing...';
-                        diagnosisResult.textContent = '';
-
-                        const response = await fetch('http://localhost:3000/transcribe', {
+                        const response = await fetch('http://localhost:3000/record', {
                             method: 'POST',
                             headers: {
                                 'Authorization': 'Bearer ' + token
@@ -126,11 +122,14 @@ No diagnosis yet.
                         }
 
                         const data = await response.json();
-
-                        transcriptionResult.textContent = `Local transcription:\n${data.local}`;
-                        diagnosisResult.textContent = `English translation:\n${data.english}`;
+                        console.log("✅ Upload success", data);
+                        lastSavedFilename = data.filename;
+                        transcriptionResult.textContent = `Saved recording file: ${data.filename}`;
+                        diagnosisResult.textContent = 'You can now submit it for transcription and diagnosis!';
+                        submitBtn.disabled = false;
 
                     } catch (err) {
+                        console.error("❌ Upload error", err.message);
                         transcriptionResult.textContent = 'Error: ' + err.message;
                         diagnosisResult.textContent = '';
                     }
@@ -142,18 +141,71 @@ No diagnosis yet.
                 transcriptionResult.textContent = 'Recording...';
                 diagnosisResult.textContent = '';
                 playback.src = '';
+                submitBtn.disabled = true;
+
             } catch (err) {
                 alert('Could not start recording: ' + err.message);
             }
         };
 
         stopBtn.onclick = () => {
-            mediaRecorder.stop();
+            console.log("🛑 Stop Recording button clicked");
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
             recordBtn.disabled = false;
             stopBtn.disabled = true;
         };
-    </script>
 
+        submitBtn.onclick = async () => {
+            console.log("📤 Submit Recording button clicked");
+
+            if (!lastSavedFilename) {
+                alert('No saved recording to submit!');
+                return;
+            }
+
+            try {
+                transcriptionResult.textContent = 'Transcribing and diagnosing...';
+                diagnosisResult.textContent = '';
+
+                const response = await fetch('http://localhost:3000/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: lastSavedFilename,
+                        language: languageSelect.value
+                    })
+                });
+
+                const responseData = await response.text();
+
+                if (!response.ok) {
+                    try {
+                        // Attempt to parse as JSON if possible
+                        const errorData = JSON.parse(responseData);
+                        throw new Error(errorData.error || 'Unknown server error');
+                    } catch {
+                        throw new Error(`Server error: ${response.status} - ${responseData}`);
+                    }
+                }
+
+                const data = JSON.parse(responseData);
+                console.log("✅ Transcription and Diagnosis Success", data);
+
+                transcriptionResult.textContent = `Local transcription:\n${data.local}`;
+                diagnosisResult.textContent = `English translation:\n${data.english}`;
+
+            } catch (err) {
+                console.error("❌ Submit error", err.message);
+                transcriptionResult.textContent = 'Error: ' + err.message;
+                diagnosisResult.textContent = '';
+            }
+        };
+    </script>
 </body>
 
 </html>

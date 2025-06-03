@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Whisper Transcriber</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        select,
+        input[type="file"],
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Whisper Transcriber</h2>
+    <form id="transcribeForm">
+        <label for="audio">Upload Audio File:</label>
+        <input type="file" id="audio" name="audio" accept="audio/*" required>
+
+        <label for="language">Select Language:</label>
+        <select id="language" name="language" required>
+            <option value="en">English</option>
+            <option value="am">Amharic</option>
+            <option value="om">Afan Oromo</option>
+            <option value="so">Somali</option>
+            <option value="aa">Afar</option>
+            <option value="ti">Tigrinya</option>
+        </select>
+
+        <button type="submit">Transcribe</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        async function sendAudio() {
+            const formData = new FormData();
+            const audioFile = document.getElementById('audio').files[0];
+            const language = document.getElementById('language').value;
+            formData.append('audio', audioFile);
+            formData.append('language', language);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                document.getElementById('result').textContent = `Transcription: ${data.transcription}`;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,9 @@
+const path = require("path");
 const Database = require("better-sqlite3");
-const db = new Database("teleDoctor.db");
+
+// Full absolute path to teleDoctor.db
+const dbPath = path.join(__dirname, "teleDoctor.db");
+const db = new Database(dbPath);
 
 // USERS
 exports.createUser = (user) => {
@@ -45,4 +49,30 @@ exports.saveDiagnosis = (userId, textInput, diagnosis, imagePath) => {
   const stmt = db.prepare(`INSERT INTO diagnoses (user_id, text_input, diagnosis, image_path)
                           VALUES (?, ?, ?, ?)`);
   return stmt.run(userId, textInput, diagnosis, imagePath);
+};
+
+// PATIENTS
+exports.insertPatient = (patient) => {
+  const stmt = db.prepare(`
+    INSERT INTO patients (fyda_id, full_name, gender, age, religion, medical_history)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  return stmt.run(
+    patient.fyda_id,
+    patient.full_name,
+    patient.gender,
+    patient.age,
+    patient.religion,
+    patient.medical_history
+  );
+};
+
+exports.getPatientByFydaId = (fydaId) => {
+  const stmt = db.prepare("SELECT * FROM patients WHERE fyda_id = ?");
+  return stmt.get(fydaId);
+};
+
+exports.getAllPatients = () => {
+  const stmt = db.prepare("SELECT * FROM patients");
+  return stmt.all();
 };

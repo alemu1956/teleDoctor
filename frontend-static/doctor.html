@@ -4,151 +4,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MalifoClinic - Doctor Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>TeleDoctor - Doctor Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f9ff;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col">
-
+<body class="flex flex-col min-h-screen">
   <header class="bg-white shadow-md p-4 flex items-center justify-between">
-    <div class="text-green-700 font-bold text-xl">MalifoClinic Doctor Portal</div>
+    <div class="text-blue-700 font-bold text-xl">TeleDoctor - Doctor Portal</div>
     <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
   </header>
 
-  <main class="flex-grow p-6 max-w-4xl mx-auto flex flex-col gap-8">
+  <main class="flex-grow p-6 max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">Patient Recordings and Diagnoses</h1>
 
-    <!-- Patient Audio Playback Section -->
-    <section aria-label="Patient Audio Playback" class="bg-white shadow-lg rounded-lg p-8">
-      <h2 class="text-3xl font-bold mb-6 text-center text-green-700">Patient Audio</h2>
+    <div class="shadow-lg rounded-lg p-8 bg-blue-50">
+      <div class="flex flex-col gap-6">
+        <div>
+          <button id="load-both-btn" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition">
+            Load Latest Recording & Diagnosis
+          </button>
+        </div>
 
-      <audio id="patient-audio" controls class="block mb-6 w-full rounded border border-gray-300"
-        aria-label="Patient audio playback"></audio>
+        <audio id="doctor-audio" controls crossorigin="use-credentials" class="w-full rounded-lg mt-4"></audio>
 
-      <button id="load-audio-btn"
-        class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 w-full max-w-xs mx-auto block">
-        Load Latest Patient Audio
-      </button>
-      <p id="audio-status" class="mt-2 text-center text-gray-600"></p>
-    </section>
-
-    <!-- AI Diagnosis Chat Section -->
-    <section aria-label="AI Diagnosis Chat" class="bg-white shadow-lg rounded-lg p-8 flex flex-col">
-      <h2 class="text-3xl font-bold mb-6 text-center text-green-700">AI Diagnosis Chat</h2>
-
-      <div id="chat-box"
-        class="flex flex-col gap-4 overflow-auto border border-gray-300 rounded p-4 h-[350px] mb-6 bg-white">
-        <!-- Chat messages appear here -->
+        <div id="diagnosis-info" class="bg-white p-6 rounded-lg mt-4 shadow">
+          <h2 class="text-xl font-semibold mb-4 text-blue-800">Diagnosis Result</h2>
+          <div id="diagnosis-text" class="text-gray-600">No diagnosis loaded yet.</div>
+        </div>
       </div>
-
-      <form id="chat-form" class="flex gap-2" autocomplete="off">
-        <input type="text" id="user-input" placeholder="Enter symptom or question..." required
-          class="flex-grow border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
-        <button type="submit" class="bg-green-600 text-white px-6 rounded hover:bg-green-700">Send</button>
-      </form>
-    </section>
-
+    </div>
   </main>
 
   <script>
-    const logoutBtn = document.getElementById('logout-btn');
-    const loadAudioBtn = document.getElementById('load-audio-btn');
-    const patientAudio = document.getElementById('patient-audio');
-    const audioStatus = document.getElementById('audio-status');
-    const chatBox = document.getElementById('chat-box');
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
-
-    // Token check
     const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Please login first!');
-      window.location.href = '/login.html';
+    const role = localStorage.getItem('role');
+
+    if (!token || role !== 'doctor') {
+      alert('Doctor access required. Please login.');
+      window.location.href = 'login.html';
     }
 
-    logoutBtn.onclick = () => {
+    document.getElementById('logout-btn').onclick = () => {
       localStorage.removeItem('token');
-      window.location.href = '/login.html';
+      localStorage.removeItem('role');
+      window.location.href = 'login.html';
     };
 
-    // Load latest patient audio URL from backend
-    loadAudioBtn.onclick = async () => {
-      audioStatus.textContent = '';
-      try {
-        const res = await fetch('http://localhost:3000/patient/latest-audio', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (!res.ok) throw new Error('Failed to load audio');
-        const data = await res.json();
-        if (data.audioUrl) {
-          patientAudio.src = data.audioUrl;
-          audioStatus.textContent = 'Latest patient audio loaded.';
-        } else {
-          audioStatus.textContent = 'No patient audio available.';
-        }
-      } catch (err) {
-        audioStatus.textContent = err.message;
-      }
-    };
-
-    // Chat history for diagnosis
-    let chatMessages = [];
-
-    // Append chat messages to chat box
-    function appendChatMessage(role, text) {
-      const div = document.createElement('div');
-      div.classList.add('max-w-[75%]', 'px-4', 'py-3', 'rounded-lg', 'whitespace-pre-wrap');
-      if (role === 'user') {
-        div.classList.add('self-end', 'bg-green-600', 'text-white');
-      } else {
-        div.classList.add('self-start', 'bg-gray-200', 'text-gray-900');
-      }
-      div.textContent = text;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // Send message to AI for diagnosis
-    async function sendChatMessage(message) {
-      chatMessages.push({ role: 'user', content: message });
-      appendChatMessage('user', message);
-      userInput.value = '';
-      userInput.disabled = true;
+    async function loadLatestData() {
+      const audioPlayer = document.getElementById('doctor-audio');
+      const diagnosisText = document.getElementById('diagnosis-text');
 
       try {
-        const res = await fetch('http://localhost:3000/diagnose', {
-          method: 'POST',
+        // Clear previous audio source
+        audioPlayer.src = '';
+
+        // Create fresh URL with cache busting
+        const audioUrl = `http://localhost:3000/latest-recording?t=${Date.now()}`;
+        audioPlayer.src = audioUrl;
+
+        // Add authorization token through query parameter
+        const diagnosisResponse = await fetch('http://localhost:3000/latest-diagnosis', {
           headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ messages: chatMessages })
+            'Authorization': 'Bearer ' + token
+          }
         });
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(errorText);
+        if (!diagnosisResponse.ok) {
+          const errorText = await diagnosisResponse.text();
+          throw new Error(`Diagnosis error: ${diagnosisResponse.status} - ${errorText}`);
         }
 
-        const data = await res.json();
-        const aiReply = data.reply;
+        const diagnosisData = await diagnosisResponse.json();
+        diagnosisText.innerHTML = `
+          <p><strong>Local Language:</strong></p>
+          <p>${diagnosisData.local}</p>
+          <hr class="my-2" />
+          <p><strong>English Translation:</strong></p>
+          <p>${diagnosisData.english}</p>
+        `;
 
-        chatMessages.push({ role: 'assistant', content: aiReply });
-        appendChatMessage('assistant', aiReply);
       } catch (err) {
-        appendChatMessage('assistant', 'Error: ' + err.message);
-      } finally {
-        userInput.disabled = false;
-        userInput.focus();
+        console.error('Error loading data:', err);
+        diagnosisText.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
       }
     }
 
-    chatForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const msg = userInput.value.trim();
-      if (msg) sendChatMessage(msg);
-    });
-  </script>
+    document.getElementById('load-both-btn').onclick = loadLatestData;
 
+    // Auto-refresh every 5 minutes (300,000 ms)
+    setInterval(loadLatestData, 300000);
+
+    // Initial load
+    loadLatestData();
+  </script>
 </body>
 
 </html>

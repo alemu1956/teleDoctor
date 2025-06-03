@@ -92,5 +92,21 @@
     "password": "$2b$10$5z6XeMgNYQZjf91IfwDd2eMuSRu/Fe5fm377hRck7mqd1ceUZ453e",
     "role": "Head Doctor",
     "approved": true
+  },
+  {
+    "id": 1748945776537,
+    "name": "Dr. Alem T",
+    "email": "alem@malifoclinic.com",
+    "password": "$2b$10$CMoGTVtTPRNHF10B6XPlyewc5bvW.NuXv83Eq.fSngxlbpmQZ80P2",
+    "role": "doctor",
+    "approved": true
+  },
+  {
+    "id": 1748950651673,
+    "name": "Elias Dimetros",
+    "email": "korrado@malifoclinic.com",
+    "password": "$2b$10$Uos13ipFBJSkUBxvkqw3bO/7AQFo4MlViO1ofsi864eq5x6txgtnW",
+    "role": "patient",
+    "approved": true
   }
 ]

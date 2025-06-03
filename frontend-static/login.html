@@ -3,51 +3,69 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TeleDoctor - Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-  <form id="login-form" class="bg-white p-8 rounded shadow-md w-full max-w-md">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
-    <input type="email" id="email" placeholder="Email" required class="w-full mb-4 p-2 border rounded" />
-    <input type="password" id="password" placeholder="Password" required class="w-full mb-6 p-2 border rounded" />
-    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
-    <p class="mt-4 text-center">
-      Don't have an account? <a href="/registration.html" class="text-blue-600 hover:underline">Register here</a>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center text-green-600 mb-6">TeleDoctor Login</h1>
+
+    <form id="login-form" class="flex flex-col gap-4">
+      <input type="email" id="email" placeholder="Email" required
+        class="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-green-400" />
+
+      <input type="password" id="password" placeholder="Password" required
+        class="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-green-400" />
+
+      <button type="submit" class="bg-green-600 text-white py-3 rounded-md hover:bg-green-700">
+        Login
+      </button>
+    </form>
+
+    <p class="text-center mt-4 text-gray-600 text-sm">
+      Don't have an account?
+      <a href="registration.html" class="text-green-600 hover:underline">Register</a>
     </p>
-  </form>
+  </div>
 
   <script>
     const form = document.getElementById('login-form');
+
     form.onsubmit = async (e) => {
       e.preventDefault();
-
-      const data = {
-        email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value
-      };
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
 
       try {
-        const res = await fetch('http://localhost:3000/auth/login', {
+        const response = await fetch('http://localhost:3000/auth/login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
         });
 
-        const json = await res.json();
+        const data = await response.json();
 
-        if (res.ok && json.token) {
-          localStorage.setItem('token', json.token);
-          localStorage.setItem('role', json.role);
-          alert('Login successful!');
-          window.location.href = '/doctor.html';
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('role', data.role);
+
+          if (data.role === 'patient') {
+            window.location.href = 'patient.html';
+          } else if (data.role === 'doctor') {
+            window.location.href = 'doctor.html';
+          }
         } else {
-          alert('Login failed: ' + (json.error || 'Unknown error'));
+          alert(data.error || 'Login failed');
         }
+
       } catch (err) {
-        alert('Network error: ' + err.message);
+        console.error(err);
+        alert('Login request failed');
       }
     };
   </script>

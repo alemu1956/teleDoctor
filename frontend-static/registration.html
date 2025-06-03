@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TeleDoctor - Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center text-green-600 mb-6">TeleDoctor Registration</h1>
+
+        <form id="register-form" class="flex flex-col gap-4">
+            <input type="text" id="name" placeholder="Name" required
+                class="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-green-400" />
+
+            <input type="email" id="email" placeholder="Email" required
+                class="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-green-400" />
+
+            <input type="password" id="password" placeholder="Password" required
+                class="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-green-400" />
+
+            <select id="role" required
+                class="border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-green-400">
+                <option value="">Select Role</option>
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+            </select>
+
+            <button type="submit" class="bg-green-600 text-white py-3 rounded-md hover:bg-green-700">
+                Register
+            </button>
+        </form>
+
+        <p class="text-center mt-4 text-gray-600 text-sm">
+            Already have an account?
+            <a href="login.html" class="text-green-600 hover:underline">Login</a>
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById('register-form');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.error || 'Registration failed');
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('Registration request failed');
+            }
+        };
+    </script>
+</body>
+
+</html>
