@@ -2,6 +2,22 @@
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
     "bcrypt": "^5.1.1",
-    "better-sqlite3": "^7.6.2"
-  }
+    "better-sqlite3": "^7.6.2",
+    "postcss-cli": "^11.0.1"
+  },
+  "name": "teledoctor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tailwind.config.js",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

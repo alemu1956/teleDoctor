@@ -2,106 +2,62 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeleDoctor - Doctor Portal</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f0f9ff;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>MalifoClinic - Doctors</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
 </head>
 
-<body class="flex flex-col min-h-screen">
-  <header class="bg-white shadow-md p-4 flex items-center justify-between">
-    <div class="text-blue-700 font-bold text-xl">TeleDoctor - Doctor Portal</div>
-    <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Logout</button>
-  </header>
-
-  <main class="flex-grow p-6 max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">Patient Recordings and Diagnoses</h1>
-
-    <div class="shadow-lg rounded-lg p-8 bg-blue-50">
-      <div class="flex flex-col gap-6">
-        <div>
-          <button id="load-both-btn" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition">
-            Load Latest Recording & Diagnosis
-          </button>
-        </div>
-
-        <audio id="doctor-audio" controls crossorigin="use-credentials" class="w-full rounded-lg mt-4"></audio>
-
-        <div id="diagnosis-info" class="bg-white p-6 rounded-lg mt-4 shadow">
-          <h2 class="text-xl font-semibold mb-4 text-blue-800">Diagnosis Result</h2>
-          <div id="diagnosis-text" class="text-gray-600">No diagnosis loaded yet.</div>
-        </div>
+<body class="bg-gray-50 text-gray-800">
+  <nav class="bg-white shadow-md">
+    <div class="container mx-auto flex justify-between items-center p-4">
+      <div class="text-2xl font-bold text-blue-600">MalifoClinic</div>
+      <div class="space-x-4">
+        <a href="index.html" class="text-gray-700 hover:text-blue-600">Home</a>
+        <a href="patients.html" class="text-gray-700 hover:text-blue-600">Patients</a>
+        <a href="pharmacy.html" class="text-gray-700 hover:text-blue-600">Pharmacy</a>
+        <a href="about.html" class="text-gray-700 hover:text-blue-600">About Us</a>
+        <a href="contact.html" class="text-gray-700 hover:text-blue-600">Contact</a>
       </div>
     </div>
-  </main>
+  </nav>
 
-  <script>
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+  <header class="bg-blue-100 py-12 text-center">
+    <h1 class="text-4xl font-bold mb-2">Our Doctors</h1>
+    <p class="text-gray-600">Meet our experienced and compassionate medical professionals.</p>
+  </header>
 
-    if (!token || role !== 'doctor') {
-      alert('Doctor access required. Please login.');
-      window.location.href = 'login.html';
-    }
+  <section class="container mx-auto my-12 px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- Doctor Card Example -->
+    <div class="bg-white shadow-md rounded-lg p-6 text-center">
+      <img src="/images/clinic1.png" alt="Clinic Logo" class="mx-auto w-24 h-24 rounded-full mb-4">
+      <h2 class="text-2xl font-semibold mb-2">Dr. Amanuel Bekele</h2>
+      <p class="text-gray-500 mb-2">Cardiologist</p>
+      <p class="text-gray-600 text-sm mb-4">Bole Medhanialem, Addis Ababa</p>
+      <a href="doctor_profile.html?id=1" class="text-blue-600 hover:underline">View Profile</a>
+    </div>
 
-    document.getElementById('logout-btn').onclick = () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      window.location.href = 'login.html';
-    };
+    <div class="bg-white shadow-md rounded-lg p-6 text-center">
+      <img src="/images/clinic2.png" alt="Clinic Logo" class="mx-auto w-24 h-24 rounded-full mb-4">
+      <h2 class="text-2xl font-semibold mb-2">Dr. Fatuma Ahmed</h2>
+      <p class="text-gray-500 mb-2">Pediatrician</p>
+      <p class="text-gray-600 text-sm mb-4">Arat Kilo, Addis Ababa</p>
+      <a href="doctor_profile.html?id=2" class="text-blue-600 hover:underline">View Profile</a>
+    </div>
 
-    async function loadLatestData() {
-      const audioPlayer = document.getElementById('doctor-audio');
-      const diagnosisText = document.getElementById('diagnosis-text');
+    <div class="bg-white shadow-md rounded-lg p-6 text-center">
+      <img src="/images/clinic3.png" alt="Clinic Logo" class="mx-auto w-24 h-24 rounded-full mb-4">
+      <h2 class="text-2xl font-semibold mb-2">Dr. Tesfaye Lemma</h2>
+      <p class="text-gray-500 mb-2">Dermatologist</p>
+      <p class="text-gray-600 text-sm mb-4">Piassa, Addis Ababa</p>
+      <a href="doctor_profile.html?id=3" class="text-blue-600 hover:underline">View Profile</a>
+    </div>
+    <!-- More doctors can be loaded dynamically -->
+  </section>
 
-      try {
-        // Clear previous audio source
-        audioPlayer.src = '';
-
-        // Create fresh URL with cache busting
-        const audioUrl = `http://localhost:3000/latest-recording?t=${Date.now()}`;
-        audioPlayer.src = audioUrl;
-
-        // Add authorization token through query parameter
-        const diagnosisResponse = await fetch('http://localhost:3000/latest-diagnosis', {
-          headers: {
-            'Authorization': 'Bearer ' + token
-          }
-        });
-
-        if (!diagnosisResponse.ok) {
-          const errorText = await diagnosisResponse.text();
-          throw new Error(`Diagnosis error: ${diagnosisResponse.status} - ${errorText}`);
-        }
-
-        const diagnosisData = await diagnosisResponse.json();
-        diagnosisText.innerHTML = `
-          <p><strong>Local Language:</strong></p>
-          <p>${diagnosisData.local}</p>
-          <hr class="my-2" />
-          <p><strong>English Translation:</strong></p>
-          <p>${diagnosisData.english}</p>
-        `;
-
-      } catch (err) {
-        console.error('Error loading data:', err);
-        diagnosisText.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
-      }
-    }
-
-    document.getElementById('load-both-btn').onclick = loadLatestData;
-
-    // Auto-refresh every 5 minutes (300,000 ms)
-    setInterval(loadLatestData, 300000);
-
-    // Initial load
-    loadLatestData();
-  </script>
+  <footer class="bg-white border-t mt-16 py-6 text-center">
+    <p class="text-gray-500">© 2025 MalifoClinic. All rights reserved.</p>
+  </footer>
 </body>
 
 </html>

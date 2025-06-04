@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Profile | MalifoClinic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 font-sans">
+    <header class="bg-white shadow p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-blue-600">MalifoClinic - Doctor Profile</h1>
+        <a href="doctor_list.html" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">⬅️ Back
+            to Doctors</a>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-8 bg-white mt-10 shadow rounded-lg">
+        <div class="flex flex-col md:flex-row gap-6">
+            <img id="clinic-logo" src="" alt="Clinic Logo" class="w-48 h-48 object-cover rounded border shadow-md">
+            <div>
+                <h2 id="doctor-name" class="text-3xl font-bold text-gray-800 mb-2"></h2>
+                <p id="specialization" class="text-lg text-blue-600 font-semibold mb-2"></p>
+                <p id="bio" class="text-gray-700 mb-4"></p>
+                <div class="space-y-2">
+                    <p><strong>📍 Address:</strong> <span id="address"></span></p>
+                    <p><strong>📞 Phone:</strong> <span id="phone"></span></p>
+                    <p><strong>🕒 Working Hours:</strong> <span id="working-hours"></span></p>
+                    <p><strong>🧑‍⚕️ Experience:</strong> <span id="experience"></span> years</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Read query parameters
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        async function loadDoctorProfile() {
+            const id = getQueryParam('id');
+            if (!id) {
+                alert('No doctor selected!');
+                window.location.href = 'doctor_list.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/doctors/${id}`);
+                if (!response.ok) throw new Error('Failed to fetch doctor profile.');
+
+                const doctor = await response.json();
+
+                document.getElementById('doctor-name').textContent = doctor.name;
+                document.getElementById('specialization').textContent = doctor.specialization;
+                document.getElementById('bio').textContent = doctor.bio;
+                document.getElementById('address').textContent = doctor.address;
+                document.getElementById('phone').textContent = doctor.phone;
+                document.getElementById('working-hours').textContent = doctor.working_hours;
+                document.getElementById('experience').textContent = doctor.experience_years;
+                document.getElementById('clinic-logo').src = doctor.logo_url;
+            } catch (error) {
+                console.error(error);
+                alert('Error loading doctor profile.');
+            }
+        }
+
+        loadDoctorProfile();
+    </script>
+</body>
+
+</html>

@@ -1,116 +1,59 @@
-<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>teleDoctor – Patient Chat</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: #f9f9f9; }
-        .chatbox { background: #fff; padding: 15px; border-radius: 5px; box-shadow: 0 0 5px #ccc; margin-top: 20px; }
-        .chat-message { margin: 10px 0; }
-        .bot { color: #004d99; }
-        .user { color: #006600; text-align: right; }
-        input, button { padding: 10px; margin-top: 10px; width: 100%; }
-        #controls { display: flex; gap: 10px; }
-        #micBtn { width: auto; padding: 0 15px; }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MalifoClinic | TeleDoctor</title>
+    <link href="./dist/output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>🩺 teleDoctor – Chatbot Assistant</h1>
-    <div class="chatbox" id="chat">
-        <div class="chat-message bot">Hello! I'm teleDoctor. Let's begin with your name:</div>
+
+<body class="flex h-screen bg-gray-50">
+
+    <!-- Sidebar -->
+    <div id="sidebar"
+        class="bg-white w-64 p-6 shadow-lg flex flex-col justify-between transition-transform duration-300 ease-in-out">
+        <div>
+            <!-- Logo and Toggle -->
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-blue-700">MalifoClinic</h1>
+                <button id="toggleBtn" class="text-gray-600 focus:outline-none md:hidden">
+                    ☰
+                </button>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="space-y-4">
+                <a href="./doctor.html" class="block text-lg font-medium text-gray-700 hover:text-blue-600">Doctors</a>
+                <a href="./patients.html"
+                    class="block text-lg font-medium text-gray-700 hover:text-blue-600">Patients</a>
+                <a href="./pharmacy.html"
+                    class="block text-lg font-medium text-gray-700 hover:text-blue-600">Pharmacy</a>
+                <a href="./about.html" class="block text-lg font-medium text-gray-700 hover:text-blue-600">About Us</a>
+                <a href="./contact.html" class="block text-lg font-medium text-gray-700 hover:text-blue-600">Contact
+                    Us</a>
+            </nav>
+        </div>
     </div>
 
-    <div id="controls">
-        <input type="text" id="userInput" placeholder="Type or speak your answer...">
-        <button id="micBtn" onclick="startListening()">🎤</button>
+    <!-- Main Content -->
+    <div class="flex-1 p-10">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to MalifoClinic TeleDoctor</h2>
+        <p class="text-gray-600 text-lg">Your trusted online healthcare platform for accessible and affordable
+            consultations.</p>
     </div>
-    <button onclick="handleUserInput()">Send</button>
 
+    <!-- Script for toggling sidebar -->
     <script>
-        const chat = document.getElementById("chat");
-        const userInput = document.getElementById("userInput");
+        const toggleBtn = document.getElementById('toggleBtn');
+        const sidebar = document.getElementById('sidebar');
 
-        let step = 0;
-        let patientData = {};
-
-        const questions = [
-            "What is your age?",
-            "Which language do you prefer (e.g., Amharic, English)?",
-            "Please describe your main symptom."
-        ];
-
-        function appendMessage(text, sender) {
-            const msg = document.createElement("div");
-            msg.className = `chat-message ${sender}`;
-            msg.innerText = text;
-            chat.appendChild(msg);
-            chat.scrollTop = chat.scrollHeight;
-
-            if (sender === "bot") speak(text);
-        }
-
-        function handleUserInput() {
-            const input = userInput.value.trim();
-            if (!input) return;
-            appendMessage(input, "user");
-            userInput.value = "";
-
-            if (step === 0) {
-                patientData.name = input;
-            } else if (step === 1) {
-                patientData.age = parseInt(input);
-            } else if (step === 2) {
-                patientData.language = input;
-            } else if (step === 3) {
-                patientData.symptom = input;
-                appendMessage("Thank you. Sending your data to the doctor...", "bot");
-                sendToBackend(patientData);
-                step++;
-                return;
-            }
-
-            step++;
-            if (step < questions.length + 1) {
-                appendMessage(questions[step - 1], "bot");
-            }
-        }
-
-        async function sendToBackend(data) {
-            const res = await fetch("http://localhost:8000/patient/submit", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            appendMessage("✅ Response: " + JSON.stringify(json, null, 2), "bot");
-        }
-
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = "en-US";
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function startListening() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                userInput.value = transcript;
-            };
-
-            recognition.onerror = (event) => {
-                console.error("Speech recognition error:", event.error);
-                alert("Sorry, I didn't catch that. Please try again.");
-            };
-
-            recognition.start();
-        }
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
     </script>
+
 </body>
+
 </html>
