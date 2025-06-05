@@ -1,0 +1,112 @@
+[
+  {
+    "id": 1,
+    "name": "Ministry Admin",
+    "email": "admin@health.gov.et",
+    "password": "$2b$10$tueJr3zGg3zVzjY/3jI2e.1TiXSILB.g7OXdT/xrkzxLYWIyvUZRy",
+    "role": "admin",
+    "approved": true
+  },
+  {
+    "id": 1747212890971,
+    "name": "Dr. Yared",
+    "email": "doctor@hospital.et",
+    "password": "$2b$10$mfCMwIniih/P1THV3MoFPO/96LyMZ4FGgVTxFqZBThBzaiUiFHn6q",
+    "role": "doctor",
+    "approved": true
+  },
+  {
+    "id": 11,
+    "name": "Ministry Admin",
+    "email": "admin@health.gov.et",
+    "password": "$2b$10$Lk7NQ2h9bfN85BtsYDqD5OUHbADNd4VZk8ZBfrKnNuvNdMrBoNDGy",
+    "role": "admin",
+    "approved": true
+  },
+  {
+    "id": 12,
+    "name": "Dr. Alemu",
+    "email": "doctor@hospital.et",
+    "password": "$2b$10$7AkRUKTZUbGqzMwWozvL4uU3M6MpPiViJIX9Cv6/AsvTu9r3geYcO",
+    "role": "doctor",
+    "approved": true
+  },
+  {
+    "id": 1748469376614,
+    "name": "Elias Dimetros",
+    "email": "elias@hospital.et",
+    "password": "$2b$10$YhsDF0yyy/PwoLvET4Pdl.0nFRU4m77scy.sCh0D3F88E3MN5KZHC",
+    "role": "lab",
+    "approved": true
+  },
+  {
+    "id": 1748469566514,
+    "name": "Elias Dimetros",
+    "email": "dimetros@hospital.et",
+    "password": "$2b$10$8KrYg6rVpIGZ9.Sk5r0VY.ZpmSIIuzQcSrsSfKpRDINg8bup9lggO",
+    "role": "admin",
+    "approved": true
+  },
+  {
+    "id": 1748469741344,
+    "name": "EDimetros",
+    "email": "edimetros@hospital.et",
+    "password": "$2b$10$4pFin5osau5mlibJNw.TyOo4vw0jWcF8GJaNRuz0TzBTL6AfZ/QaC",
+    "role": "admin",
+    "approved": true
+  },
+  {
+    "id": 1748538797427,
+    "name": "Ghion",
+    "email": "lab-technician@hospital.et",
+    "password": "$2b$10$dDWoq7Lxd.FqLl4JHHV4bOr1/uG3KO.JT2yIlE.Xxa67nKh6XOBTW",
+    "role": "lab",
+    "cert": "1234",
+    "address": "Bole",
+    "approved": true
+  },
+  {
+    "id": 1748538930320,
+    "name": "Malifo",
+    "email": "malifo@health.gov.et",
+    "password": "$2b$10$21S4beY20DeyM2NISqH7Iu9WSyg1jwjKfN0SfBC.kn54Tl5Dj02WC",
+    "role": "lab",
+    "cert": "1234",
+    "address": "Kella",
+    "approved": true
+  },
+  {
+    "id": 1748612250087,
+    "name": "Dr. John Doe",
+    "email": "doctor@example.com",
+    "password": "$2b$10$0M8Vmistr4SNg8AMGR5zcO0mUQkaMQTKXp68E5KNeXokK2B0YzriO",
+    "role": "doctor",
+    "cert": "cert123",
+    "address": "123 Main Street",
+    "approved": true
+  },
+  {
+    "id": 1748678440841,
+    "name": "Dr. Tatayewa",
+    "email": "tatayewa@hospital.et",
+    "password": "$2b$10$5z6XeMgNYQZjf91IfwDd2eMuSRu/Fe5fm377hRck7mqd1ceUZ453e",
+    "role": "Head Doctor",
+    "approved": true
+  },
+  {
+    "id": 1748945776537,
+    "name": "Dr. Alem T",
+    "email": "alem@malifoclinic.com",
+    "password": "$2b$10$CMoGTVtTPRNHF10B6XPlyewc5bvW.NuXv83Eq.fSngxlbpmQZ80P2",
+    "role": "doctor",
+    "approved": true
+  },
+  {
+    "id": 1748950651673,
+    "name": "Elias Dimetros",
+    "email": "korrado@malifoclinic.com",
+    "password": "$2b$10$Uos13ipFBJSkUBxvkqw3bO/7AQFo4MlViO1ofsi864eq5x6txgtnW",
+    "role": "patient",
+    "approved": true
+  }
+]

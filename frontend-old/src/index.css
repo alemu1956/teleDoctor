@@ -1,0 +1,10 @@
+/* Custom styles only */
+body {
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
